@@ -1,0 +1,87 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    @template block_itn_course_progress/student_progress
+
+    Individual learner progress across enrolled courses.
+}}
+<section class="itn-view-student-progress d-none" data-region="view-student-progress">
+    <div class="itn-student-progress-topbar d-flex align-items-center justify-content-between mb-4">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="close-student-progress">
+            <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>
+            {{#str}}studentprogress_back, block_itn_course_progress{{/str}}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-icon"
+                data-action="close-student-progress"
+                aria-label="{{#str}}studentprogress_back, block_itn_course_progress{{/str}}">
+            <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <article class="itn-student-profile-card mb-5">
+        <div class="itn-profile-summary d-flex flex-wrap align-items-center">
+            <img class="itn-student-progress-avatar" data-region="student-progress-avatar" src="" alt="">
+            <div class="itn-profile-identity flex-grow-1">
+                <h2 class="itn-profile-name mb-3" data-region="student-progress-name"></h2>
+                <p class="itn-profile-lastaccess mb-0">
+                    <strong>{{#str}}studentprogress_lastaccess, block_itn_course_progress{{/str}}</strong>
+                    <span data-region="student-progress-lastaccess"></span>
+                </p>
+            </div>
+            <div class="itn-profile-actions d-flex flex-wrap gap-3">
+                <button type="button" class="btn itn-profile-btn itn-contact-btn d-none"
+                        data-action="add-student-contact">
+                    <i class="fa fa-address-book-o me-2" aria-hidden="true"></i>
+                    <span data-region="student-contact-label">
+                        {{#str}}studentprogress_addcontact, block_itn_course_progress{{/str}}
+                    </span>
+                </button>
+                <a class="btn btn-primary itn-profile-btn" data-region="student-progress-message" target="_blank"
+                   rel="noopener noreferrer">
+                    <i class="fa fa-comment-o me-2" aria-hidden="true"></i>
+                    {{#str}}studentprogress_sendmessage, block_itn_course_progress{{/str}}
+                </a>
+            </div>
+        </div>
+
+        <div class="itn-profile-stats row g-0"
+             aria-label="{{#str}}studentprogress_stats, block_itn_course_progress{{/str}}">
+            <div class="col-6 col-md-3 itn-profile-stat">
+                <strong data-region="student-stat-contacts">0</strong>
+                <span>{{#str}}studentprogress_contacts, block_itn_course_progress{{/str}}</span>
+            </div>
+            <div class="col-6 col-md-3 itn-profile-stat">
+                <strong data-region="student-stat-discussions">0</strong>
+                <span>{{#str}}studentprogress_discussions, block_itn_course_progress{{/str}}</span>
+            </div>
+            <div class="col-6 col-md-3 itn-profile-stat">
+                <strong data-region="student-stat-blogentries">0</strong>
+                <span>{{#str}}studentprogress_blogentries, block_itn_course_progress{{/str}}</span>
+            </div>
+            <div class="col-6 col-md-3 itn-profile-stat">
+                <strong data-region="student-stat-badges">0</strong>
+                <span>{{#str}}studentprogress_badges, block_itn_course_progress{{/str}}</span>
+            </div>
+        </div>
+    </article>
+
+    <nav class="itn-profile-tabs mb-4"
+         aria-label="{{#str}}studentprogress_sections, block_itn_course_progress{{/str}}">
+        <a data-region="student-profile-tab" target="_blank" rel="noopener noreferrer"></a>
+        <span class="active" aria-current="page">{{#str}}studentprogress_courses, block_itn_course_progress{{/str}}</span>
+        <a data-region="student-details-tab" target="_blank" rel="noopener noreferrer">
+            {{#str}}studentprogress_moredetails, block_itn_course_progress{{/str}}
+        </a>
+    </nav>
+
+    <div class="text-center text-muted py-5 d-none" data-region="student-progress-loading">
+        <i class="fa fa-spinner fa-spin me-2" aria-hidden="true"></i>
+        {{#str}}studentprogress_loading, block_itn_course_progress{{/str}}
+    </div>
+    <div class="itn-student-course-list" data-region="student-progress-courses"></div>
+</section>

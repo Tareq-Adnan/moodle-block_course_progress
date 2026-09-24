@@ -232,6 +232,87 @@ class external extends external_api {
     }
 
     /**
+     * Parameter description for get_student_progress.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_student_progress_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'studentid' => new external_value(PARAM_INT, 'Student user ID'),
+            'sourcecourseid' => new external_value(PARAM_INT, 'Course from which the student was selected'),
+        ]);
+    }
+
+    /**
+     * Get a learner's progress in all courses visible to the current reporter.
+     *
+     * @param int $studentid Student user ID.
+     * @param int $sourcecourseid Course from which the student was selected.
+     * @return array
+     */
+    public static function get_student_progress(int $studentid, int $sourcecourseid): array {
+        $params = self::validate_parameters(self::get_student_progress_parameters(), [
+            'studentid' => $studentid,
+            'sourcecourseid' => $sourcecourseid,
+        ]);
+
+        self::validate_context(context_course::instance($params['sourcecourseid']));
+
+        return helper::get_student_progress($params['studentid'], $params['sourcecourseid']);
+    }
+
+    /**
+     * Return structure for get_student_progress.
+     *
+     * @return external_single_structure
+     */
+    public static function get_student_progress_returns(): external_single_structure {
+        return new external_single_structure([
+            'student' => new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Student user ID'),
+                'name' => new external_value(PARAM_TEXT, 'Student full name'),
+                'email' => new external_value(PARAM_EMAIL, 'Student email address'),
+                'idnumber' => new external_value(PARAM_TEXT, 'Student ID number'),
+                'avatarurl' => new external_value(PARAM_URL, 'Student avatar URL'),
+                'lastaccess' => new external_value(PARAM_TEXT, 'Last site access date'),
+                'profileurl' => new external_value(PARAM_URL, 'Student profile URL'),
+                'messageurl' => new external_value(PARAM_URL, 'Message student URL'),
+                'contacts' => new external_value(PARAM_INT, 'Number of contacts'),
+                'discussions' => new external_value(PARAM_INT, 'Number of forum posts'),
+                'blogentries' => new external_value(PARAM_INT, 'Number of blog entries'),
+                'badges' => new external_value(PARAM_INT, 'Number of issued badges'),
+                'viewerid' => new external_value(PARAM_INT, 'Current report viewer user ID'),
+                'contactstate' => new external_value(PARAM_ALPHA, 'Contact action state'),
+            ]),
+            'totalcourses' => new external_value(PARAM_INT, 'Number of visible enrolled courses'),
+            'courses' => new external_multiple_structure(
+                new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Course ID'),
+                    'fullname' => new external_value(PARAM_TEXT, 'Course full name'),
+                    'category' => new external_value(PARAM_TEXT, 'Course category'),
+                    'courseimageurl' => new external_value(PARAM_RAW, 'Course overview or generated image URL'),
+                    'teachers' => new external_value(PARAM_TEXT, 'Course contacts'),
+                    'teachername' => new external_value(PARAM_TEXT, 'Primary course contact name'),
+                    'teacheravatarurl' => new external_value(PARAM_URL, 'Primary course contact avatar', VALUE_DEFAULT, ''),
+                    'additionalteachers' => new external_value(PARAM_INT, 'Additional course contact count'),
+                    'hasteacher' => new external_value(PARAM_BOOL, 'Whether the course has a configured contact'),
+                    'completedactivities' => new external_value(PARAM_INT, 'Completed tracked activities'),
+                    'totalactivities' => new external_value(PARAM_INT, 'Total tracked activities'),
+                    'activitysummary' => new external_value(PARAM_TEXT, 'Completed activity summary'),
+                    'progress' => new external_value(PARAM_INT, 'Course progress percentage'),
+                    'hascompletion' => new external_value(PARAM_BOOL, 'Course completion is enabled'),
+                    'status' => new external_value(PARAM_TEXT, 'Course progress status'),
+                    'statuskey' => new external_value(PARAM_ALPHA, 'Machine-readable status'),
+                    'timecompleted' => new external_value(PARAM_TEXT, 'Course completion date'),
+                    'lastaccess' => new external_value(PARAM_TEXT, 'Last course access date'),
+                    'visits' => new external_value(PARAM_INT, 'Course view count'),
+                    'courseurl' => new external_value(PARAM_URL, 'Course URL'),
+                ])
+            ),
+        ]);
+    }
+
+    /**
      * Parameter description for get_groups.
      *
      * @return external_function_parameters

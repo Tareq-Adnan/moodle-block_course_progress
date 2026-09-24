@@ -38,7 +38,9 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         this.config = config;
         this.activeView = 'courses';
         this.selectedCourse = null;
+        this.selectedStudent = null;
         this.selectedGroupId = 0;
+        this.labels = config.labels || {};
 
         // View 1 (Courses) State.
         this.courseSearch = '';
@@ -57,6 +59,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
 
         this.batchSummaryOpen = false;
         this.isFullscreen = false;
+        this.progressExpandedView = false;
 
         // Column Configs.
         this.allCourseCols = config.courseColumns || [];
@@ -116,6 +119,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         this.dom = {
             viewCourses: this.root.querySelector('[data-region="view-courses"]'),
             viewStudents: this.root.querySelector('[data-region="view-students"]'),
+            viewStudentProgress: this.root.querySelector('[data-region="view-student-progress"]'),
             alertContainer: this.root.querySelector('[data-region="alert-container"]'),
             alertText: this.root.querySelector('.itn-alert-text'),
 
@@ -139,6 +143,22 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             studentsCountInfo: this.root.querySelector('[data-region="students-count-info"]'),
             studentsPages: this.root.querySelector('[data-region="students-pages"]'),
             batchSummaryArea: this.root.querySelector('[data-region="batch-summary-area"]'),
+
+            // Individual Student Progress DOM.
+            studentProgressAvatar: this.root.querySelector('[data-region="student-progress-avatar"]'),
+            studentProgressName: this.root.querySelector('[data-region="student-progress-name"]'),
+            studentProgressLastAccess: this.root.querySelector('[data-region="student-progress-lastaccess"]'),
+            studentProgressMessage: this.root.querySelector('[data-region="student-progress-message"]'),
+            studentProgressLoading: this.root.querySelector('[data-region="student-progress-loading"]'),
+            studentProgressCourses: this.root.querySelector('[data-region="student-progress-courses"]'),
+            studentProfileTab: this.root.querySelector('[data-region="student-profile-tab"]'),
+            studentDetailsTab: this.root.querySelector('[data-region="student-details-tab"]'),
+            studentContactButton: this.root.querySelector('[data-action="add-student-contact"]'),
+            studentContactLabel: this.root.querySelector('[data-region="student-contact-label"]'),
+            studentStatContacts: this.root.querySelector('[data-region="student-stat-contacts"]'),
+            studentStatDiscussions: this.root.querySelector('[data-region="student-stat-discussions"]'),
+            studentStatBlogEntries: this.root.querySelector('[data-region="student-stat-blogentries"]'),
+            studentStatBadges: this.root.querySelector('[data-region="student-stat-badges"]'),
 
             // Column Picker.
             columnPickerMenu: this.root.querySelector('[data-region="column-picker-menu"]'),
@@ -229,6 +249,17 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             });
         });
 
+        var closeStudentProgressBtns = this.root.querySelectorAll('[data-action="close-student-progress"]');
+        closeStudentProgressBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                self.switchToStudentsView();
+            });
+        });
+
+        if (this.dom.studentContactButton) {
+            this.dom.studentContactButton.addEventListener('click', () => this.addStudentContact());
+        }
+
         // 9. Fullscreen / Expand Toggle ([+] Button).
         var fullscreenBtn = this.root.querySelector('[data-action="toggle-fullscreen"]');
         if (fullscreenBtn) {
@@ -297,6 +328,8 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 self.dom.alertContainer.classList.add('d-none');
                 if (self.activeView === 'courses') {
                     self.loadCourses();
+                } else if (self.activeView === 'studentprogress') {
+                    self.loadStudentProgress();
                 } else {
                     self.loadStudents();
                 }
@@ -489,6 +522,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         this.activeView = 'students';
 
         this.dom.viewCourses.classList.add('d-none');
+        this.dom.viewStudentProgress.classList.add('d-none');
         this.dom.viewStudents.classList.remove('d-none');
 
         // Fetch groups for the course.
@@ -504,6 +538,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
     CourseProgress.prototype.switchToCoursesView = function() {
         this.activeView = 'courses';
         this.dom.viewStudents.classList.add('d-none');
+        this.dom.viewStudentProgress.classList.add('d-none');
         this.dom.viewCourses.classList.remove('d-none');
         if (this.dom.batchSummaryArea) {
             this.dom.batchSummaryArea.classList.add('d-none');
@@ -519,6 +554,22 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                     icon.className = 'fa fa-plus';
                 }
             }
+        }
+    };
+
+    /**
+     * Return from individual progress to the selected course's student list.
+     */
+    CourseProgress.prototype.switchToStudentsView = function() {
+        this.activeView = 'students';
+        this.dom.viewStudentProgress.classList.add('d-none');
+        this.dom.viewCourses.classList.add('d-none');
+        this.dom.viewStudents.classList.remove('d-none');
+        this.root.classList.remove('is-student-progress');
+        if (this.progressExpandedView) {
+            this.isFullscreen = false;
+            this.progressExpandedView = false;
+            this.root.classList.remove('is-fullscreen');
         }
     };
 
@@ -656,14 +707,25 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         td.textContent = stu.index;
                         break;
                     case 'name':
-                        var nameHtml = '<div class="d-flex align-items-center justify-content-between">' +
-                            '<span class="fw-medium text-dark">' + stu.name + '</span>' +
-                            '<a href="' + stu.messageurl + '" class="itn-student-email-link ms-2" ' +
-                                'title="Send message" target="_blank">' +
-                                '<i class="fa fa-envelope" aria-hidden="true"></i>' +
-                            '</a>' +
-                        '</div>';
-                        td.innerHTML = nameHtml;
+                        var nameWrapper = document.createElement('div');
+                        nameWrapper.className = 'd-flex align-items-center justify-content-between';
+                        var nameButton = document.createElement('button');
+                        nameButton.type = 'button';
+                        nameButton.className = 'btn btn-link p-0 fw-medium text-start itn-student-progress-link';
+                        nameButton.textContent = stu.name;
+                        nameButton.addEventListener('click', function() {
+                            self.drillDownIntoStudent(stu);
+                        });
+                        var messageLink = document.createElement('a');
+                        messageLink.href = stu.messageurl;
+                        messageLink.className = 'itn-student-email-link ms-2';
+                        messageLink.title = self.labels.sendmessage || 'Send message';
+                        messageLink.target = '_blank';
+                        messageLink.rel = 'noopener noreferrer';
+                        messageLink.innerHTML = '<i class="fa fa-envelope" aria-hidden="true"></i>';
+                        nameWrapper.appendChild(nameButton);
+                        nameWrapper.appendChild(messageLink);
+                        td.appendChild(nameWrapper);
                         break;
                     case 'status':
                         td.innerHTML = '<span class="itn-status-text">' + stu.status + '</span>';
@@ -694,6 +756,212 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             });
 
             tbody.appendChild(tr);
+        });
+    };
+
+    /**
+     * Open View 3 for an individual learner.
+     *
+     * @param {Object} student Student row data.
+     */
+    CourseProgress.prototype.drillDownIntoStudent = function(student) {
+        this.selectedStudent = student;
+        this.activeView = 'studentprogress';
+        if (!this.isFullscreen) {
+            this.isFullscreen = true;
+            this.progressExpandedView = true;
+            this.root.classList.add('is-fullscreen');
+        }
+        this.root.classList.add('is-student-progress');
+        this.dom.viewCourses.classList.add('d-none');
+        this.dom.viewStudents.classList.add('d-none');
+        this.dom.viewStudentProgress.classList.remove('d-none');
+        this.loadStudentProgress();
+    };
+
+    /**
+     * Load individual progress across visible enrolled courses.
+     */
+    CourseProgress.prototype.loadStudentProgress = function() {
+        if (!this.selectedStudent || !this.selectedCourse) {
+            return;
+        }
+
+        this.dom.alertContainer.classList.add('d-none');
+        this.dom.studentProgressCourses.innerHTML = '';
+        this.dom.studentProgressLoading.classList.remove('d-none');
+
+        Repository.getStudentProgress(this.selectedStudent.id, this.selectedCourse.id).then((response) => {
+            this.dom.studentProgressLoading.classList.add('d-none');
+            this.renderStudentProgress(response);
+            return response;
+        }).catch((error) => {
+            this.dom.studentProgressLoading.classList.add('d-none');
+            this.showError(error);
+        });
+    };
+
+    /**
+     * Render the individual learner header and course cards.
+     *
+     * @param {Object} data API response.
+     */
+    CourseProgress.prototype.renderStudentProgress = function(data) {
+        const student = data.student;
+        const labels = this.labels;
+        this.currentStudentProgress = student;
+
+        this.dom.studentProgressAvatar.src = student.avatarurl;
+        this.dom.studentProgressAvatar.alt = student.name;
+        this.dom.studentProgressName.textContent = student.name;
+        this.dom.studentProgressLastAccess.textContent = student.lastaccess;
+        this.dom.studentProgressMessage.href = student.messageurl;
+        this.dom.studentProfileTab.href = student.profileurl;
+        this.dom.studentProfileTab.textContent = student.name;
+        this.dom.studentDetailsTab.href = student.profileurl;
+        this.dom.studentStatContacts.textContent = student.contacts;
+        this.dom.studentStatDiscussions.textContent = student.discussions;
+        this.dom.studentStatBlogEntries.textContent = student.blogentries;
+        this.dom.studentStatBadges.textContent = student.badges;
+        this.renderContactAction(student);
+        this.dom.studentProgressCourses.innerHTML = '';
+
+        if (!data.courses || data.courses.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'alert alert-secondary text-center';
+            empty.textContent = labels.nocourses || 'No enrolled courses are available.';
+            this.dom.studentProgressCourses.appendChild(empty);
+            return;
+        }
+
+        data.courses.forEach((course) => {
+            const card = document.createElement('article');
+            card.className = 'itn-student-course-card mb-4';
+
+            const layout = document.createElement('div');
+            layout.className = 'row g-0 align-items-stretch';
+
+            const imageColumn = document.createElement('div');
+            imageColumn.className = 'col-md-5 itn-course-image-wrap';
+            const image = document.createElement('img');
+            image.className = 'itn-course-image';
+            image.src = course.courseimageurl;
+            image.alt = course.fullname;
+            image.loading = 'lazy';
+            imageColumn.appendChild(image);
+
+            const content = document.createElement('div');
+            content.className = 'col-md-7 itn-course-card-content';
+            const category = document.createElement('span');
+            category.className = 'itn-course-category';
+            category.textContent = course.category;
+
+            const title = document.createElement('a');
+            title.className = 'itn-course-card-title';
+            title.href = course.courseurl;
+            title.target = '_blank';
+            title.rel = 'noopener noreferrer';
+            title.textContent = course.fullname;
+
+            const teacher = document.createElement('div');
+            teacher.className = 'itn-course-teacher';
+            if (course.hasteacher) {
+                const teacherImage = document.createElement('img');
+                teacherImage.src = course.teacheravatarurl;
+                teacherImage.alt = '';
+                const teacherName = document.createElement('span');
+                teacherName.textContent = course.teachername;
+                teacher.appendChild(teacherImage);
+                teacher.appendChild(teacherName);
+                if (course.additionalteachers > 0) {
+                    const moreTeachers = document.createElement('span');
+                    moreTeachers.className = 'itn-more-teachers';
+                    moreTeachers.textContent = `+${course.additionalteachers}`;
+                    moreTeachers.title = course.teachers;
+                    teacher.appendChild(moreTeachers);
+                }
+            }
+
+            const completion = document.createElement('div');
+            completion.className = 'itn-course-completion';
+            const activitySummary = document.createElement('div');
+            activitySummary.className = 'itn-activity-summary';
+            activitySummary.textContent = course.activitysummary;
+            const progress = Math.max(0, Math.min(100, parseInt(course.progress, 10) || 0));
+            const progressTrack = document.createElement('div');
+            progressTrack.className = 'itn-linear-progress';
+            progressTrack.setAttribute('role', 'progressbar');
+            progressTrack.setAttribute('aria-valuenow', progress);
+            progressTrack.setAttribute('aria-valuemin', '0');
+            progressTrack.setAttribute('aria-valuemax', '100');
+            const progressBar = document.createElement('span');
+            progressBar.style.width = `${progress}%`;
+            progressTrack.appendChild(progressBar);
+            const completionLabel = document.createElement('strong');
+            completionLabel.className = 'itn-course-completed-label';
+            completionLabel.textContent = `${progress}% ${labels.coursecompleted || 'Course Completed'}`;
+            completion.appendChild(activitySummary);
+            completion.appendChild(progressTrack);
+            completion.appendChild(completionLabel);
+
+            const courseLink = document.createElement('a');
+            courseLink.className = 'btn btn-outline-primary itn-view-course-btn';
+            courseLink.href = course.courseurl;
+            courseLink.target = '_blank';
+            courseLink.rel = 'noopener noreferrer';
+            courseLink.textContent = labels.viewcourse || 'View course';
+
+            content.appendChild(category);
+            content.appendChild(title);
+            content.appendChild(teacher);
+            content.appendChild(completion);
+            content.appendChild(courseLink);
+            layout.appendChild(imageColumn);
+            layout.appendChild(content);
+            card.appendChild(layout);
+            this.dom.studentProgressCourses.appendChild(card);
+        });
+    };
+
+    /**
+     * Configure the add-to-contacts action for the selected student.
+     *
+     * @param {Object} student Student API data.
+     */
+    CourseProgress.prototype.renderContactAction = function(student) {
+        const button = this.dom.studentContactButton;
+        button.classList.toggle('d-none', student.contactstate === 'unavailable');
+        button.disabled = student.contactstate !== 'available';
+
+        const labels = this.labels;
+        const stateLabels = {
+            available: labels.addcontact || 'Add to contacts',
+            pending: labels.contactpending || 'Contact request pending',
+            contact: labels.alreadycontact || 'Already a contact'
+        };
+        this.dom.studentContactLabel.textContent = stateLabels[student.contactstate] || '';
+    };
+
+    /**
+     * Send a contact request using Moodle's messaging service.
+     */
+    CourseProgress.prototype.addStudentContact = function() {
+        if (!this.currentStudentProgress || this.currentStudentProgress.contactstate !== 'available') {
+            return;
+        }
+
+        const student = this.currentStudentProgress;
+        this.dom.studentContactButton.disabled = true;
+        Repository.addContact(student.viewerid, student.id).then((response) => {
+            if (response.warnings && response.warnings.length) {
+                throw new Error(response.warnings[0].message);
+            }
+            student.contactstate = 'pending';
+            this.dom.studentContactLabel.textContent = this.labels.contactsucceeded || 'Contact request sent';
+            return response;
+        }).catch((error) => {
+            this.dom.studentContactButton.disabled = false;
+            this.showError(error);
         });
     };
 

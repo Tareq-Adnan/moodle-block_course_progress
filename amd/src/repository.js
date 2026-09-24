@@ -69,6 +69,42 @@ define(['core/ajax'], function(Ajax) {
         },
 
         /**
+         * Fetch one student's progress across visible enrolled courses.
+         *
+         * @param {Number} studentid Student user ID.
+         * @param {Number} sourcecourseid Course from which the student was selected.
+         * @return {Promise}
+         */
+        getStudentProgress: function(studentid, sourcecourseid) {
+            const request = {
+                methodname: 'block_itn_course_progress_get_student_progress',
+                args: {
+                    studentid: studentid,
+                    sourcecourseid: sourcecourseid
+                }
+            };
+            return Ajax.call([request])[0];
+        },
+
+        /**
+         * Send a Moodle contact request to the selected student.
+         *
+         * @param {Number} userid Current report viewer user ID.
+         * @param {Number} requesteduserid Student user ID.
+         * @return {Promise}
+         */
+        addContact: function(userid, requesteduserid) {
+            const request = {
+                methodname: 'core_message_create_contact_request',
+                args: {
+                    userid: userid,
+                    requesteduserid: requesteduserid
+                }
+            };
+            return Ajax.call([request])[0];
+        },
+
+        /**
          * Fetch course groups list.
          *
          * @param {Number} courseid

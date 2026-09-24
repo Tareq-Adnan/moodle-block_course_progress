@@ -668,6 +668,261 @@ class helper {
     }
 
     /**
+     * Get one learner's progress across courses visible to the current reporter.
+     *
+     * The source course is used as the authorization boundary for selecting the
+     * learner. Each returned course is independently checked so a teacher cannot
+     * discover progress from a course they are not allowed to report on.
+     *
+     * @param int $studentid Student user ID.
+     * @param int $sourcecourseid Course from which the student was selected.
+     * @return array Student details and visible course progress records.
+     */
+    public static function get_student_progress(int $studentid, int $sourcecourseid): array {
+        global $DB, $PAGE, $USER;
+
+        $DB->get_record('course', ['id' => $sourcecourseid], 'id', MUST_EXIST);
+        $sourcecontext = context_course::instance($sourcecourseid);
+        if (!self::can_view_course($sourcecourseid)) {
+            throw new \required_capability_exception(
+                $sourcecontext,
+                'block/itn_course_progress:view',
+                'nopermissions',
+                ''
+            );
+        }
+
+        $student = $DB->get_record('user', ['id' => $studentid, 'deleted' => 0], '*', MUST_EXIST);
+        if (!empty($student->suspended) ||
+                !is_enrolled($sourcecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+            throw new \invalid_parameter_exception('The selected user is not an active learner in this course.');
+        }
+
+        $userpicture = new user_picture($student);
+        $userpicture->size = 1;
+
+        $contactcount = (int)$DB->count_records_select(
+            'message_contacts',
+            'userid = :contactuserid OR contactid = :contactid',
+            ['contactuserid' => $studentid, 'contactid' => $studentid]
+        );
+        $discussioncount = (int)$DB->count_records('forum_posts', ['userid' => $studentid]);
+        $blogcount = (int)$DB->count_records('post', ['userid' => $studentid, 'module' => 'blog']);
+        $badgecount = (int)$DB->count_records('badge_issued', ['userid' => $studentid]);
+
+        if ((int)$USER->id === $studentid) {
+            $contactstate = 'unavailable';
+        } else if (\core_message\api::is_contact((int)$USER->id, $studentid)) {
+            $contactstate = 'contact';
+        } else if (!empty(\core_message\api::get_contact_requests_between_users((int)$USER->id, $studentid))) {
+            $contactstate = 'pending';
+        } else if (\core_message\api::can_create_contact((int)$USER->id, $studentid)) {
+            $contactstate = 'available';
+        } else {
+            $contactstate = 'unavailable';
+        }
+
+        $courses = [];
+        $courserenderer = $PAGE->get_renderer('core');
+        $enrolledcourses = enrol_get_all_users_courses(
+            $studentid,
+            true,
+            'enablecompletion,enddate,visible,category',
+            'sortorder ASC'
+        );
+        foreach ($enrolledcourses as $enrolledcourse) {
+            $courseid = (int)$enrolledcourse->id;
+            if (!self::can_view_course($courseid)) {
+                continue;
+            }
+
+            $coursecontext = context_course::instance($courseid);
+            if (!is_enrolled($coursecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+                continue;
+            }
+            if (empty($enrolledcourse->visible) &&
+                    !has_capability('moodle/course:viewhiddencourses', $coursecontext)) {
+                continue;
+            }
+
+            $totalactivities = (int)$DB->count_records_select(
+                'course_modules',
+                'course = :courseid AND completion <> :nottracked AND deletioninprogress = 0',
+                [
+                    'courseid' => $courseid,
+                    'nottracked' => COMPLETION_TRACKING_NONE,
+                ]
+            );
+            $completedactivities = (int)$DB->count_records_sql(
+                "SELECT COUNT(DISTINCT cm.id)
+                   FROM {course_modules} cm
+                   JOIN {course_modules_completion} cmc ON cmc.coursemoduleid = cm.id
+                  WHERE cm.course = :courseid
+                    AND cm.completion <> :nottracked
+                    AND cm.deletioninprogress = 0
+                    AND cmc.userid = :userid
+                    AND cmc.completionstate > :incomplete",
+                [
+                    'courseid' => $courseid,
+                    'nottracked' => COMPLETION_TRACKING_NONE,
+                    'userid' => $studentid,
+                    'incomplete' => COMPLETION_INCOMPLETE,
+                ]
+            );
+
+            $completion = $DB->get_record(
+                'course_completions',
+                ['course' => $courseid, 'userid' => $studentid],
+                'id, timecompleted'
+            );
+            $lastaccess = (int)$DB->get_field(
+                'user_lastaccess',
+                'timeaccess',
+                ['courseid' => $courseid, 'userid' => $studentid]
+            );
+
+            $progressvalue = 0;
+            if (!empty($enrolledcourse->enablecompletion)) {
+                $progressvalue = (int)round(progress::get_course_progress_percentage(
+                    $enrolledcourse,
+                    $studentid
+                ) ?? 0);
+            }
+
+            if (!empty($completion->timecompleted)) {
+                $statuskey = 'completed';
+                $status = get_string('studentprogress_status_completed', 'block_itn_course_progress');
+            } else if (empty($enrolledcourse->enablecompletion) || $totalactivities === 0) {
+                $statuskey = 'notracking';
+                $status = get_string('status_notracking', 'block_itn_course_progress');
+            } else if ($completedactivities > 0 || $lastaccess > 0) {
+                $statuskey = 'inprogress';
+                $status = get_string('studentprogress_status_inprogress', 'block_itn_course_progress');
+            } else {
+                $statuskey = 'notstarted';
+                $status = get_string('studentprogress_status_notstarted', 'block_itn_course_progress');
+            }
+
+            $categoryname = $DB->get_field('course_categories', 'name', ['id' => $enrolledcourse->category]);
+            $courseimageurl = \core_course\external\course_summary_exporter::get_course_image($enrolledcourse);
+            if (!$courseimageurl) {
+                $courseimageurl = $courserenderer->get_generated_image_for_id($courseid);
+            }
+            $teacherdetails = self::get_course_teacher_details($coursecontext);
+            $visits = (int)$DB->count_records('logstore_standard_log', [
+                'courseid' => $courseid,
+                'userid' => $studentid,
+                'eventname' => self::COURSE_VIEWED_EVENT,
+                'anonymous' => 0,
+            ]);
+
+            $courses[] = [
+                'id' => $courseid,
+                'fullname' => format_string($enrolledcourse->fullname, true, ['context' => $coursecontext]),
+                'category' => $categoryname ? format_string($categoryname) : '-',
+                'courseimageurl' => $courseimageurl,
+                'teachers' => $teacherdetails['names'],
+                'teachername' => $teacherdetails['primaryname'],
+                'teacheravatarurl' => $teacherdetails['primaryavatarurl'],
+                'additionalteachers' => $teacherdetails['additionalcount'],
+                'hasteacher' => $teacherdetails['hasteacher'],
+                'completedactivities' => $completedactivities,
+                'totalactivities' => $totalactivities,
+                'activitysummary' => get_string('studentprogress_activitysummary', 'block_itn_course_progress', (object)[
+                    'completed' => $completedactivities,
+                    'total' => $totalactivities,
+                ]),
+                'progress' => min(100, max(0, $progressvalue)),
+                'hascompletion' => !empty($enrolledcourse->enablecompletion),
+                'status' => $status,
+                'statuskey' => $statuskey,
+                'timecompleted' => !empty($completion->timecompleted) ?
+                    userdate($completion->timecompleted, '%d %b, %Y') : '-',
+                'lastaccess' => $lastaccess > 0 ? userdate($lastaccess, '%d %b, %Y') : '-',
+                'visits' => $visits,
+                'courseurl' => (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false),
+            ];
+        }
+
+        return [
+            'student' => [
+                'id' => $studentid,
+                'name' => fullname($student),
+                'email' => $student->email,
+                'idnumber' => !empty($student->idnumber) ? $student->idnumber : '-',
+                'avatarurl' => $userpicture->get_url($PAGE)->out(false),
+                'lastaccess' => !empty($student->lastaccess) ?
+                    userdate($student->lastaccess, '%d %b, %Y') : '-',
+                'profileurl' => (new moodle_url('/user/view.php', [
+                    'id' => $studentid,
+                    'course' => $sourcecourseid,
+                ]))->out(false),
+                'messageurl' => (new moodle_url('/message/index.php', ['id' => $studentid]))->out(false),
+                'contacts' => $contactcount,
+                'discussions' => $discussioncount,
+                'blogentries' => $blogcount,
+                'badges' => $badgecount,
+                'viewerid' => (int)$USER->id,
+                'contactstate' => $contactstate,
+            ],
+            'totalcourses' => count($courses),
+            'courses' => $courses,
+        ];
+    }
+
+    /**
+     * Get configured course contact names.
+     *
+     * @param context_course $context Course context.
+     * @return string Comma-separated contact names or a dash.
+     */
+    private static function get_course_teacher_details(context_course $context): array {
+        global $CFG, $PAGE;
+
+        $roleids = array_filter(array_map('intval', explode(',', (string)$CFG->coursecontact)));
+        $contacts = [];
+        foreach ($roleids as $roleid) {
+            $roleusers = get_role_users(
+                $roleid,
+                $context,
+                false,
+                '',
+                null,
+                true
+            );
+            foreach ($roleusers as $roleuser) {
+                $contacts[(int)$roleuser->id] = $roleuser;
+            }
+        }
+
+        if (empty($contacts)) {
+            return [
+                'names' => '-',
+                'primaryname' => '-',
+                'primaryavatarurl' => '',
+                'additionalcount' => 0,
+                'hasteacher' => false,
+            ];
+        }
+
+        $names = array_map(fn($contact) => fullname($contact), $contacts);
+        $primarycontact = reset($contacts);
+        if (!property_exists($primarycontact, 'imagealt')) {
+            $primarycontact->imagealt = null;
+        }
+        $primarypicture = new user_picture($primarycontact);
+        $primarypicture->size = 0;
+
+        return [
+            'names' => implode(', ', $names),
+            'primaryname' => fullname($primarycontact),
+            'primaryavatarurl' => $primarypicture->get_url($PAGE)->out(false),
+            'additionalcount' => max(0, count($contacts) - 1),
+            'hasteacher' => true,
+        ];
+    }
+
+    /**
      * Get available groups for a course (Requirement 4).
      *
      * @param int $courseid Course ID.

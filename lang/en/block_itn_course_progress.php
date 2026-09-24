@@ -85,6 +85,35 @@ $string['status_never'] = 'Never Accessed';
 $string['status_notracking'] = 'No tracking';
 $string['sendmessage'] = 'Send message to {$a}';
 
+// Individual Student Progress.
+$string['studentprogress_title'] = 'Individual Student Progress';
+$string['studentprogress_back'] = 'Back to students';
+$string['studentprogress_loading'] = 'Loading student progress...';
+$string['studentprogress_sendmessage'] = 'Send message';
+$string['studentprogress_viewprofile'] = 'View profile';
+$string['studentprogress_lastaccess'] = 'Last site access';
+$string['studentprogress_teachers'] = 'Teacher(s)';
+$string['studentprogress_completion'] = 'Activity completion';
+$string['studentprogress_viewcourse'] = 'View course';
+$string['studentprogress_nocourses'] = 'No enrolled courses are available within your reporting access.';
+$string['studentprogress_status_completed'] = 'Completed';
+$string['studentprogress_status_inprogress'] = 'In progress';
+$string['studentprogress_status_notstarted'] = 'Not started';
+$string['studentprogress_activitysummary'] = '{$a->completed} of {$a->total} activities';
+$string['studentprogress_addcontact'] = 'Add to contacts';
+$string['studentprogress_contactpending'] = 'Contact request pending';
+$string['studentprogress_alreadycontact'] = 'Already a contact';
+$string['studentprogress_contactsucceeded'] = 'Contact request sent';
+$string['studentprogress_contacts'] = 'Contacts';
+$string['studentprogress_discussions'] = 'Discussions';
+$string['studentprogress_blogentries'] = 'Blog Entries';
+$string['studentprogress_badges'] = 'Badges';
+$string['studentprogress_stats'] = 'Student activity summary';
+$string['studentprogress_sections'] = 'Student profile sections';
+$string['studentprogress_courses'] = 'Courses';
+$string['studentprogress_moredetails'] = 'More Details';
+$string['studentprogress_coursecompleted'] = 'Course Completed';
+
 // Batch Table Columns.
 $string['col_batchname'] = 'Batch Name';
 $string['col_members'] = 'Members';

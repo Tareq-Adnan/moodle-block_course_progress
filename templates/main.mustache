@@ -213,6 +213,8 @@
             </ul>
         </div>
     </div>
+
+    {{> block_itn_course_progress/student_progress}}
 </div>
 
 {{#js}}
@@ -223,7 +225,8 @@ require(['block_itn_course_progress/main'], function(Main) {
         defaultPerPage: {{defaultperpage}},
         enableBatchSummary: {{#enablebatchsummary}}true{{/enablebatchsummary}}{{^enablebatchsummary}}false{{/enablebatchsummary}},
         courseColumns: {{{coursecolumnsjson}}},
-        studentColumns: {{{studentcolumnsjson}}}
+        studentColumns: {{{studentcolumnsjson}}},
+        labels: {{{labelsjson}}}
     });
 });
 {{/js}}

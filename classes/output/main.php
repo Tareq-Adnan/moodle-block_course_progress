@@ -99,6 +99,25 @@ class main implements renderable, templatable {
         ];
 
         $uniqueid = 'itn_cp_' . uniqid();
+        $labels = [
+            'sendmessage' => get_string('studentprogress_sendmessage', 'block_itn_course_progress'),
+            'viewprofile' => get_string('studentprogress_viewprofile', 'block_itn_course_progress'),
+            'email' => get_string('col_email', 'block_itn_course_progress'),
+            'studentid' => get_string('col_idnumber', 'block_itn_course_progress'),
+            'lastaccess' => get_string('studentprogress_lastaccess', 'block_itn_course_progress'),
+            'teachers' => get_string('studentprogress_teachers', 'block_itn_course_progress'),
+            'completion' => get_string('studentprogress_completion', 'block_itn_course_progress'),
+            'completeddate' => get_string('col_timecompleted', 'block_itn_course_progress'),
+            'visits' => get_string('col_visits', 'block_itn_course_progress'),
+            'viewcourse' => get_string('studentprogress_viewcourse', 'block_itn_course_progress'),
+            'nocourses' => get_string('studentprogress_nocourses', 'block_itn_course_progress'),
+            'loading' => get_string('studentprogress_loading', 'block_itn_course_progress'),
+            'addcontact' => get_string('studentprogress_addcontact', 'block_itn_course_progress'),
+            'contactpending' => get_string('studentprogress_contactpending', 'block_itn_course_progress'),
+            'alreadycontact' => get_string('studentprogress_alreadycontact', 'block_itn_course_progress'),
+            'contactsucceeded' => get_string('studentprogress_contactsucceeded', 'block_itn_course_progress'),
+            'coursecompleted' => get_string('studentprogress_coursecompleted', 'block_itn_course_progress'),
+        ];
 
         return [
             'uniqueid' => $uniqueid,
@@ -109,6 +128,7 @@ class main implements renderable, templatable {
             'studentcolumns' => $allstudentcols,
             'coursecolumnsjson' => json_encode($allcoursecols),
             'studentcolumnsjson' => json_encode($allstudentcols),
+            'labelsjson' => json_encode($labels),
             'perpageoptions' => [
                 ['val' => 5, 'selected' => $defaultperpage === 5],
                 ['val' => 10, 'selected' => $defaultperpage === 10],

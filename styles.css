@@ -27,7 +27,7 @@
     --itn-text-dark: #334155;
     --itn-text-muted: #64748b;
     --itn-accent-green: #00b894;
-    --itn-btn-blue: #0066cc;
+    --itn-btn-blue: #06c;
     font-family: inherit;
 }
 
@@ -55,7 +55,7 @@
     padding: 0.375rem 0.85rem;
     min-width: 210px;
     color: #334155;
-    background-color: #ffffff;
+    background-color: #fff;
 }
 
 .itn-course-progress-widget .itn-search-input:focus {
@@ -67,7 +67,7 @@
 .itn-course-progress-widget .itn-btn-load {
     background-color: var(--itn-btn-blue);
     border-color: var(--itn-btn-blue);
-    color: #ffffff;
+    color: #fff;
     font-weight: 600;
     padding: 0.375rem 1.15rem;
     display: inline-flex;
@@ -79,12 +79,12 @@
 .itn-course-progress-widget .itn-btn-load:hover {
     background-color: #0052a3;
     border-color: #0052a3;
-    color: #ffffff;
+    color: #fff;
 }
 
 .itn-course-progress-widget .itn-btn-columns {
     border: 1px solid #ced4da;
-    background-color: #ffffff;
+    background-color: #fff;
     color: #334155;
     padding: 0.375rem 0.85rem;
     font-weight: 500;
@@ -120,7 +120,7 @@
 .itn-course-progress-widget .itn-perpage-select,
 .itn-course-progress-widget .itn-group-select {
     border: 1px solid #ced4da;
-    background-color: #ffffff;
+    background-color: #fff;
     color: #334155;
     padding: 0.375rem 2rem 0.375rem 0.75rem;
 }
@@ -140,8 +140,8 @@
 }
 
 .itn-course-progress-widget .itn-data-table thead th {
-    background-color: var(--itn-header-bg) !important;
-    color: var(--itn-text-dark) !important;
+    background-color: var(--itn-header-bg);
+    color: var(--itn-text-dark);
     font-size: 0.875rem;
     font-weight: 600;
     text-transform: none;
@@ -234,9 +234,318 @@
     font-weight: 400;
 }
 
+.itn-course-progress-widget .itn-student-progress-link {
+    color: #1e293b;
+    text-decoration: none;
+}
+
+.itn-course-progress-widget .itn-student-progress-link:hover,
+.itn-course-progress-widget .itn-student-progress-link:focus {
+    color: var(--itn-btn-blue);
+    text-decoration: underline;
+}
+
+.itn-course-progress-widget.is-student-progress {
+    background: #f4f7fd;
+    padding: 2rem;
+}
+
+.itn-course-progress-widget .itn-view-student-progress {
+    max-width: 1440px;
+    margin: 0 auto;
+    color: #334155;
+}
+
+.itn-course-progress-widget .itn-student-profile-card {
+    padding: 2.5rem 3rem 1.75rem;
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+}
+
+.itn-course-progress-widget .itn-profile-summary {
+    gap: 2.5rem;
+}
+
+.itn-course-progress-widget .itn-profile-identity {
+    min-width: 240px;
+}
+
+.itn-course-progress-widget .itn-profile-name {
+    color: #34424c;
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.itn-course-progress-widget .itn-profile-lastaccess {
+    color: #526170;
+    font-size: 1rem;
+}
+
+.itn-course-progress-widget .itn-student-progress-avatar {
+    width: 150px;
+    height: 150px;
+    border: 3px solid #d6dee7;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.itn-course-progress-widget .itn-profile-btn {
+    min-height: 48px;
+    padding: 0.7rem 1.4rem;
+    border-width: 2px;
+    border-radius: 0.4rem;
+    font-weight: 600;
+}
+
+.itn-course-progress-widget .itn-contact-btn {
+    color: #0759f8;
+    background: #fff;
+    border-color: #0759f8;
+}
+
+.itn-course-progress-widget .itn-profile-stats {
+    margin-top: 3rem;
+}
+
+.itn-course-progress-widget .itn-profile-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.itn-course-progress-widget .itn-profile-stat strong {
+    color: #34424c;
+    font-size: 2.35rem;
+    line-height: 1;
+}
+
+.itn-course-progress-widget .itn-profile-stat span {
+    margin-top: 0.7rem;
+    color: #526170;
+    font-size: 1rem;
+    font-weight: 600;
+    border-bottom: 2px solid #526170;
+}
+
+.itn-course-progress-widget .itn-profile-tabs {
+    display: flex;
+    gap: 2.5rem;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.itn-course-progress-widget .itn-profile-tabs a,
+.itn-course-progress-widget .itn-profile-tabs span {
+    display: inline-block;
+    padding: 0.75rem 0 1rem;
+    color: #526170;
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.itn-course-progress-widget .itn-profile-tabs .active {
+    color: #0759f8;
+    border-bottom: 4px solid #0759f8;
+}
+
+.itn-course-progress-widget .itn-student-course-card {
+    padding: 2rem;
+    overflow: hidden;
+    background: #fff;
+    border: 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+}
+
+.itn-course-progress-widget .itn-student-course-card {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.itn-course-progress-widget .itn-student-course-card:hover {
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.09);
+}
+
+.itn-course-progress-widget .itn-course-image-wrap {
+    min-height: 250px;
+}
+
+.itn-course-progress-widget .itn-course-image {
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+    max-height: 300px;
+    border-radius: 0.65rem;
+    object-fit: cover;
+}
+
+.itn-course-progress-widget .itn-course-card-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 250px;
+    padding: 0.15rem 0 0.15rem 2rem;
+}
+
+.itn-course-progress-widget .itn-course-category {
+    display: inline-block;
+    padding: 0.35rem 0.55rem;
+    color: #34424c;
+    background: #edf1f5;
+    border-radius: 0.15rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.itn-course-progress-widget .itn-course-card-title {
+    margin-top: 0.7rem;
+    color: #34424c;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-decoration: none;
+}
+
+.itn-course-progress-widget .itn-course-card-title:hover,
+.itn-course-progress-widget .itn-course-card-title:focus {
+    color: #0759f8;
+    text-decoration: underline;
+}
+
+.itn-course-progress-widget .itn-course-teacher {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    margin-top: 0.85rem;
+    color: #667085;
+    font-size: 1rem;
+}
+
+.itn-course-progress-widget .itn-course-teacher img {
+    width: 34px;
+    height: 34px;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.itn-course-progress-widget .itn-more-teachers {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: 0.5rem;
+    color: #526170;
+    background: #edf1f5;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.itn-course-progress-widget .itn-course-completion {
+    width: 65%;
+    max-width: 430px;
+    margin-top: auto;
+}
+
+.itn-course-progress-widget .itn-activity-summary {
+    margin-bottom: 0.55rem;
+    color: #667085;
+    font-size: 0.95rem;
+}
+
+.itn-course-progress-widget .itn-linear-progress {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    background: #e9edf1;
+    border-radius: 999px;
+}
+
+.itn-course-progress-widget .itn-linear-progress span {
+    display: block;
+    height: 100%;
+    background: #35b779;
+    border-radius: inherit;
+}
+
+.itn-course-progress-widget .itn-course-completed-label {
+    display: block;
+    margin-top: 0.55rem;
+    color: #44515c;
+    font-size: 1.1rem;
+}
+
+.itn-course-progress-widget .itn-view-course-btn {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 0.55rem 1.2rem;
+    border-width: 2px;
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    .itn-course-progress-widget.is-student-progress {
+        padding: 1rem;
+    }
+
+    .itn-course-progress-widget .itn-student-profile-card {
+        padding: 1.5rem;
+    }
+
+    .itn-course-progress-widget .itn-profile-summary {
+        justify-content: center;
+        gap: 1.5rem;
+        text-align: center;
+    }
+
+    .itn-course-progress-widget .itn-profile-name {
+        font-size: 2rem;
+    }
+
+    .itn-course-progress-widget .itn-profile-actions {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .itn-course-progress-widget .itn-profile-tabs {
+        gap: 1.25rem;
+    }
+
+    .itn-course-progress-widget .itn-student-course-card {
+        padding: 1rem;
+    }
+
+    .itn-course-progress-widget .itn-course-image-wrap,
+    .itn-course-progress-widget .itn-course-image {
+        min-height: 190px;
+        max-height: 220px;
+    }
+
+    .itn-course-progress-widget .itn-course-card-content {
+        min-height: 300px;
+        padding: 1.25rem 0 0;
+    }
+
+    .itn-course-progress-widget .itn-course-completion {
+        width: 100%;
+    }
+
+    .itn-course-progress-widget .itn-view-course-btn {
+        position: static;
+        align-self: flex-end;
+        margin-top: 1.25rem;
+    }
+}
+
 /* Batch Summary Card */
 .itn-course-progress-widget .itn-batch-summary-card {
-    background-color: #ffffff;
+    background-color: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -244,13 +553,24 @@
 
 /* Fullscreen / Expanded Mode Overlay */
 .itn-course-progress-widget.is-fullscreen {
-    position: fixed !important;
-    inset: 1.5rem !important;
-    z-index: 1050 !important;
+    position: fixed;
+    inset: 1.5rem;
+    z-index: 1050;
     overflow-y: auto;
-    border-radius: 0.5rem !important;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-    background: #ffffff !important;
-    padding: 1.5rem !important;
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
+.itn-course-progress-widget.is-fullscreen.is-student-progress {
+    padding: 2rem;
+    background: #f4f7fd;
+}
+
+@media (max-width: 767.98px) {
+    .itn-course-progress-widget.is-fullscreen.is-student-progress {
+        inset: 0.5rem;
+        padding: 1rem;
+    }
+}

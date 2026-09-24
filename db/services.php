@@ -39,6 +39,13 @@ $functions = [
         'type' => 'read',
         'ajax' => true,
     ],
+    'block_itn_course_progress_get_student_progress' => [
+        'classname' => 'block_itn_course_progress\external',
+        'methodname' => 'get_student_progress',
+        'description' => 'Retrieve one student progress across courses visible to the current reporter.',
+        'type' => 'read',
+        'ajax' => true,
+    ],
     'block_itn_course_progress_get_groups' => [
         'classname' => 'block_itn_course_progress\external',
         'methodname' => 'get_groups',
