@@ -1,0 +1,229 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_itn_course_progress/main
+
+    Main container for Course & Student Progress block with group filter.
+}}
+<div class="itn-course-progress-widget"
+     id="{{uniqueid}}"
+     data-region="itn-course-progress"
+     data-defaultload="{{#defaultload}}1{{/defaultload}}{{^defaultload}}0{{/defaultload}}"
+     data-defaultperpage="{{defaultperpage}}"
+     data-enablebatchsummary="{{#enablebatchsummary}}1{{/enablebatchsummary}}{{^enablebatchsummary}}0{{/enablebatchsummary}}">
+
+    <!-- View 1: Course Engagement Overview (Requirement 3) -->
+    <div class="itn-view-courses" data-region="view-courses">
+        <!-- Controls Toolbar (No duplicate title - Moodle block header handles title) -->
+        <div class="itn-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div class="itn-toolbar-left d-flex align-items-center gap-2">
+                <label for="{{uniqueid}}-search-courses" class="mb-0 fw-semibold text-secondary small">Search:</label>
+                <div class="itn-search-wrapper position-relative">
+                    <input type="text"
+                           id="{{uniqueid}}-search-courses"
+                           class="form-control form-control-sm itn-search-input"
+                           placeholder="{{#str}}searchcourses, block_itn_course_progress{{/str}}"
+                           data-action="search-courses"
+                           autocomplete="off">
+                </div>
+            </div>
+
+            <div class="itn-toolbar-right d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                <div class="form-check mb-0 d-flex align-items-center">
+                    <input class="form-check-input itn-checkbox me-1"
+                           type="checkbox"
+                           id="{{uniqueid}}-always-load"
+                           data-action="toggle-always-load"
+                           {{#defaultload}}checked{{/defaultload}}>
+                    <label class="form-check-label small text-secondary" for="{{uniqueid}}-always-load">
+                        {{#str}}alwaysloadprogress, block_itn_course_progress{{/str}}
+                    </label>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-primary itn-btn-load" data-action="load-progress">
+                    {{#str}}loadprogress, block_itn_course_progress{{/str}}
+                </button>
+
+                <!-- Column Picker Trigger -->
+                <div class="itn-column-picker-wrapper position-relative">
+                    <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-columns" data-action="toggle-column-picker">
+                        <i class="fa fa-cog me-1" aria-hidden="true"></i> {{#str}}columns, block_itn_course_progress{{/str}} <i class="fa fa-caret-down ms-1" aria-hidden="true"></i>
+                    </button>
+                    {{> block_itn_course_progress/column_selector}}
+                </div>
+
+                <div class="d-flex align-items-center gap-1">
+                    <span class="small text-secondary">Show</span>
+                    <select class="form-select form-select-sm itn-perpage-select" data-action="change-perpage" style="width: auto;">
+                        {{#perpageoptions}}
+                        <option value="{{val}}" {{#selected}}selected{{/selected}}>{{val}}</option>
+                        {{/perpageoptions}}
+                    </select>
+                    <span class="small text-secondary">Entries</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Container -->
+        <div class="itn-alert-container d-none" data-region="alert-container">
+            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between p-2 mb-3" role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa fa-exclamation-circle text-danger" aria-hidden="true"></i>
+                    <span class="small itn-alert-text">{{#str}}errorloading, block_itn_course_progress{{/str}}</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" data-action="retry-fetch">
+                    {{#str}}retry, block_itn_course_progress{{/str}}
+                </button>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-responsive" data-region="courses-table-container">
+            <table class="table itn-data-table align-middle" data-region="courses-table">
+                <thead>
+                    <tr data-region="courses-thead">
+                        <!-- Populated by JavaScript -->
+                    </tr>
+                </thead>
+                <tbody data-region="courses-tbody">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination & Entry Count -->
+        <div class="itn-pagination-wrapper d-flex flex-wrap justify-content-between align-items-center mt-3" data-region="courses-pagination">
+            <div class="small text-secondary" data-region="courses-count-info">
+                <!-- e.g. Showing 1 to 10 of 25 entries -->
+            </div>
+            <ul class="pagination pagination-sm mb-0 gap-1" data-region="courses-pages">
+                <!-- Page numbers rendered dynamically -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- View 2: Student Drill-Down & Group Filter (Requirements 4 & 5) -->
+    <div class="itn-view-students d-none" data-region="view-students">
+        <div class="itn-drilldown-header d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom">
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-back" data-action="close-students-view" title="{{#str}}close, block_itn_course_progress{{/str}}">
+                    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i> Back
+                </button>
+                <h5 class="itn-course-subheading mb-0 fw-bold text-primary" data-region="selected-course-title">
+                    <!-- Course Fullname -->
+                </h5>
+            </div>
+            <div class="itn-view-controls d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-icon" data-action="toggle-fullscreen" title="{{#str}}expand, block_itn_course_progress{{/str}}">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-icon" data-action="close-students-view" title="{{#str}}close, block_itn_course_progress{{/str}}">
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Group Filter Toolbar -->
+        <div class="itn-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2 my-3">
+            <div class="itn-toolbar-left d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                <!-- Group Filter Dropdown (Requirement 4) -->
+                <div class="d-flex align-items-center gap-2">
+                    <label class="mb-0 fw-semibold text-secondary small" for="{{uniqueid}}-group-filter">
+                        {{#str}}selectgroup, block_itn_course_progress{{/str}}
+                    </label>
+                    <select id="{{uniqueid}}-group-filter" class="form-select form-select-sm itn-group-select" data-action="filter-group">
+                        <option value="0">{{#str}}allgroups, block_itn_course_progress{{/str}}</option>
+                    </select>
+                </div>
+
+                {{#enablebatchsummary}}
+                <button type="button" class="btn btn-sm btn-outline-info itn-btn-batch-summary" data-action="toggle-batch-summary">
+                    <i class="fa fa-bar-chart me-1" aria-hidden="true"></i> {{#str}}togglebatchsummary, block_itn_course_progress{{/str}}
+                </button>
+                {{/enablebatchsummary}}
+            </div>
+
+            <div class="itn-toolbar-right d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                <div class="itn-search-wrapper position-relative">
+                    <input type="text"
+                           class="form-control form-control-sm itn-search-input"
+                           placeholder="{{#str}}searchstudents, block_itn_course_progress{{/str}}"
+                           data-action="search-students"
+                           autocomplete="off">
+                </div>
+
+                <!-- Column Picker Trigger for Students -->
+                <div class="itn-column-picker-wrapper position-relative">
+                    <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-columns" data-action="toggle-column-picker">
+                        <i class="fa fa-cog me-1" aria-hidden="true"></i> {{#str}}columns, block_itn_course_progress{{/str}} <i class="fa fa-caret-down ms-1" aria-hidden="true"></i>
+                    </button>
+                    {{> block_itn_course_progress/column_selector}}
+                </div>
+
+                <div class="d-flex align-items-center gap-1">
+                    <span class="small text-secondary">Show</span>
+                    <select class="form-select form-select-sm itn-perpage-select" data-action="change-student-perpage" style="width: auto;">
+                        {{#perpageoptions}}
+                        <option value="{{val}}" {{#selected}}selected{{/selected}}>{{val}}</option>
+                        {{/perpageoptions}}
+                    </select>
+                    <span class="small text-secondary">Entries</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Summary Container (Requirement 4 Extension) -->
+        <div class="itn-batch-summary-placeholder d-none" data-region="batch-summary-area"></div>
+
+        <!-- Student Table Container (Requirement 5) -->
+        <div class="table-responsive" data-region="students-table-container">
+            <table class="table itn-data-table align-middle" data-region="students-table">
+                <thead>
+                    <tr data-region="students-thead">
+                        <!-- Populated by JavaScript -->
+                    </tr>
+                </thead>
+                <tbody data-region="students-tbody">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Student Pagination -->
+        <div class="itn-pagination-wrapper d-flex flex-wrap justify-content-between align-items-center mt-3" data-region="students-pagination">
+            <div class="small text-secondary" data-region="students-count-info">
+                <!-- Showing X to Y of Z entries -->
+            </div>
+            <ul class="pagination pagination-sm mb-0 gap-1" data-region="students-pages">
+                <!-- Page numbers rendered dynamically -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+{{#js}}
+require(['block_itn_course_progress/main'], function(Main) {
+    Main.init({
+        elementId: '{{uniqueid}}',
+        defaultLoad: {{#defaultload}}true{{/defaultload}}{{^defaultload}}false{{/defaultload}},
+        defaultPerPage: {{defaultperpage}},
+        enableBatchSummary: {{#enablebatchsummary}}true{{/enablebatchsummary}}{{^enablebatchsummary}}false{{/enablebatchsummary}},
+        courseColumns: {{{coursecolumnsjson}}},
+        studentColumns: {{{studentcolumnsjson}}}
+    });
+});
+{{/js}}

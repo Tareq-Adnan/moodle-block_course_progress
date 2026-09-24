@@ -1,0 +1,256 @@
+/*
+ * This file is part of Moodle - http://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Scoped styles for ITN-BUET Course Progress block.
+ * Matches reference UI aesthetics cleanly without interfering with Moodle theme cards.
+ */
+
+.itn-course-progress-widget {
+    --itn-header-bg: #edf3f8;
+    --itn-border-color: #f1f5f9;
+    --itn-header-border: #e2e8f0;
+    --itn-text-dark: #334155;
+    --itn-text-muted: #64748b;
+    --itn-accent-green: #00b894;
+    --itn-btn-blue: #0066cc;
+    font-family: inherit;
+}
+
+/* Toolbar Controls - Uniform 38px sizing & baseline alignment */
+.itn-course-progress-widget .itn-toolbar {
+    align-items: center;
+}
+
+.itn-course-progress-widget .itn-search-input,
+.itn-course-progress-widget .itn-btn-load,
+.itn-course-progress-widget .itn-btn-columns,
+.itn-course-progress-widget .itn-perpage-select,
+.itn-course-progress-widget .itn-group-select,
+.itn-course-progress-widget .itn-btn-batch-summary,
+.itn-course-progress-widget .itn-btn-back {
+    height: 38px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.itn-course-progress-widget .itn-search-input {
+    border: 1px solid #ced4da;
+    padding: 0.375rem 0.85rem;
+    min-width: 210px;
+    color: #334155;
+    background-color: #ffffff;
+}
+
+.itn-course-progress-widget .itn-search-input:focus {
+    border-color: var(--itn-btn-blue);
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+    outline: none;
+}
+
+.itn-course-progress-widget .itn-btn-load {
+    background-color: var(--itn-btn-blue);
+    border-color: var(--itn-btn-blue);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.375rem 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.itn-course-progress-widget .itn-btn-load:hover {
+    background-color: #0052a3;
+    border-color: #0052a3;
+    color: #ffffff;
+}
+
+.itn-course-progress-widget .itn-btn-columns {
+    border: 1px solid #ced4da;
+    background-color: #ffffff;
+    color: #334155;
+    padding: 0.375rem 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.itn-course-progress-widget .itn-btn-columns:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.itn-course-progress-widget .itn-btn-reset-columns {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-color: #cbd5e1;
+    color: #475569;
+    padding: 0.3rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.itn-course-progress-widget .itn-btn-reset-columns:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.itn-course-progress-widget .itn-perpage-select,
+.itn-course-progress-widget .itn-group-select {
+    border: 1px solid #ced4da;
+    background-color: #ffffff;
+    color: #334155;
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+}
+
+.itn-course-progress-widget .itn-checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+    border-color: #ced4da;
+}
+
+/* Table Header & Cell Layout */
+.itn-course-progress-widget .itn-data-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+.itn-course-progress-widget .itn-data-table thead th {
+    background-color: var(--itn-header-bg) !important;
+    color: var(--itn-text-dark) !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    padding: 0.85rem 1rem;
+    border-top: none;
+    border-bottom: 1px solid var(--itn-header-border);
+    border-right: 1px solid var(--itn-header-border);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.itn-course-progress-widget .itn-data-table thead th:last-child {
+    border-right: none;
+}
+
+.itn-course-progress-widget .itn-sort-icon {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.itn-course-progress-widget .itn-sort-icon .fa-sort-asc,
+.itn-course-progress-widget .itn-sort-icon .fa-sort-desc {
+    color: var(--itn-btn-blue);
+}
+
+.itn-course-progress-widget .itn-data-table tbody td {
+    padding: 1.15rem 1rem;
+    font-size: 0.875rem;
+    color: var(--itn-text-dark);
+    border-bottom: 1px solid var(--itn-border-color);
+    border-right: 1px solid var(--itn-border-color);
+    vertical-align: middle;
+}
+
+.itn-course-progress-widget .itn-data-table tbody td:last-child {
+    border-right: none;
+}
+
+.itn-course-progress-widget .itn-data-table tbody tr:hover td {
+    background-color: #fbfcfd;
+}
+
+/* Course Link */
+.itn-course-progress-widget .itn-course-name-link {
+    color: #1e293b;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.itn-course-progress-widget .itn-course-name-link:hover {
+    color: var(--itn-btn-blue);
+    text-decoration: none;
+}
+
+/* Progress Donut Indicator */
+.itn-course-progress-widget .itn-progress-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.itn-course-progress-widget .itn-progress-val {
+    font-size: 0.8125rem;
+    color: #475569;
+    font-weight: 500;
+    min-width: 28px;
+}
+
+/* Student Drill-Down Elements */
+.itn-course-progress-widget .itn-student-email-link {
+    color: var(--itn-accent-green);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: transform 0.15s ease;
+}
+
+.itn-course-progress-widget .itn-student-email-link:hover {
+    color: #008f72;
+    transform: scale(1.1);
+}
+
+.itn-course-progress-widget .itn-status-text {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* Batch Summary Card */
+.itn-course-progress-widget .itn-batch-summary-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Fullscreen / Expanded Mode Overlay */
+.itn-course-progress-widget.is-fullscreen {
+    position: fixed !important;
+    inset: 1.5rem !important;
+    z-index: 1050 !important;
+    overflow-y: auto;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    background: #ffffff !important;
+    padding: 1.5rem !important;
+}
+

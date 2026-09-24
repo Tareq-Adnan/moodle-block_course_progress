@@ -1,0 +1,49 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_itn_course_progress/progress_ring
+
+    Renders an SVG circular donut progress indicator.
+
+    Example context (json):
+    {
+        "progress": 56,
+        "iszero": false,
+        "isfull": false
+    }
+}}
+<div class="itn-progress-cell d-inline-flex align-items-center gap-2"
+     role="progressbar"
+     aria-valuenow="{{progress}}"
+     aria-valuemin="0"
+     aria-valuemax="100"
+     title="{{progress}}%">
+    <svg width="38" height="38" viewBox="0 0 36 36" class="flex-shrink-0" style="display: block;">
+        <circle cx="18" cy="18" r="14" fill="none" stroke="#edf2f7" stroke-width="4.8"></circle>
+        {{^iszero}}
+        <circle cx="18" cy="18" r="14" fill="none"
+            stroke="#00b894"
+            stroke-width="4.8"
+            stroke-linecap="round"
+            stroke-dasharray="87.96"
+            stroke-dashoffset="calc(87.96 - (87.96 * {{progress}}) / 100)"
+            transform="rotate(-90 18 18)"
+            style="transition: stroke-dashoffset 0.3s ease;"></circle>
+        {{/iszero}}
+    </svg>
+    <span class="itn-progress-val small fw-normal">{{progress}}%</span>
+</div>

@@ -1,0 +1,69 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_itn_course_progress/batch_summary
+
+    Batch-wise comparative performance summary table.
+}}
+<div class="itn-batch-summary-container my-3 p-3 bg-light rounded border">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0 fw-bold text-primary">
+            <i class="fa fa-users me-1" aria-hidden="true"></i> {{#str}}batchsummarytitle, block_itn_course_progress{{/str}}
+        </h6>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="hide-batch-summary">
+            <i class="fa fa-times me-1" aria-hidden="true"></i> {{#str}}close, block_itn_course_progress{{/str}}
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0 itn-batch-table">
+            <thead>
+                <tr class="table-light">
+                    <th>{{#str}}col_batchname, block_itn_course_progress{{/str}}</th>
+                    <th class="text-center">{{#str}}col_members, block_itn_course_progress{{/str}}</th>
+                    <th class="text-center">{{#str}}col_batchactive, block_itn_course_progress{{/str}}</th>
+                    <th class="text-center">{{#str}}col_batchcompleted, block_itn_course_progress{{/str}}</th>
+                    <th class="text-center">{{#str}}col_batchrate, block_itn_course_progress{{/str}}</th>
+                    <th class="text-center">{{#str}}col_batchprogress, block_itn_course_progress{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#batches}}
+                <tr>
+                    <td class="fw-semibold text-dark">{{batchname}}</td>
+                    <td class="text-center fw-bold text-dark">{{members}}</td>
+                    <td class="text-center text-success fw-bold">{{active}}</td>
+                    <td class="text-center text-primary fw-bold">{{completed}}</td>
+                    <td class="text-center">
+                        <span class="badge rounded-pill text-white px-2 py-1" style="background-color: #00b4d8; font-weight: 600; font-size: 0.75rem;">{{completionrate}}%</span>
+                    </td>
+                    <td class="text-center">
+                        {{> block_itn_course_progress/progress_ring}}
+                    </td>
+                </tr>
+                {{/batches}}
+                {{^batches}}
+                <tr>
+                    <td colspan="6" class="text-center py-3 text-muted">
+                        {{#str}}nobatches, block_itn_course_progress{{/str}}
+                    </td>
+                </tr>
+                {{/batches}}
+            </tbody>
+        </table>
+    </div>
+</div>
