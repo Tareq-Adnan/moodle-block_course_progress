@@ -70,9 +70,9 @@ class main implements renderable, templatable {
         }
 
         $allcoursecols = [
-            ['key' => 'index', 'label' => get_string('col_index', 'block_itn_course_progress'), 'enabled' => in_array('index', $configuredcoursecols, true)],
-            ['key' => 'coursename', 'label' => get_string('col_courses', 'block_itn_course_progress'), 'enabled' => in_array('coursename', $configuredcoursecols, true)],
-            ['key' => 'startdate', 'label' => get_string('col_startdate', 'block_itn_course_progress'), 'enabled' => in_array('startdate', $configuredcoursecols, true)],
+            ['key' => 'index', 'label' => get_string('col_index', 'block_itn_course_progress'), 'enabled' => in_array('index', $configuredcoursecols, true), 'sortable' => false],
+            ['key' => 'coursename', 'label' => get_string('col_courses', 'block_itn_course_progress'), 'enabled' => in_array('coursename', $configuredcoursecols, true), 'sortable' => true],
+            ['key' => 'startdate', 'label' => get_string('col_startdate', 'block_itn_course_progress'), 'enabled' => in_array('startdate', $configuredcoursecols, true), 'sortable' => true],
             ['key' => 'enrolled', 'label' => get_string('col_students', 'block_itn_course_progress'), 'enabled' => in_array('enrolled', $configuredcoursecols, true)],
             ['key' => 'progress', 'label' => get_string('col_progress', 'block_itn_course_progress'), 'enabled' => in_array('progress', $configuredcoursecols, true)],
             ['key' => 'active', 'label' => get_string('col_active', 'block_itn_course_progress'), 'enabled' => in_array('active', $configuredcoursecols, true)],
@@ -81,21 +81,21 @@ class main implements renderable, templatable {
             ['key' => 'completionrate', 'label' => get_string('col_completionrate', 'block_itn_course_progress'), 'enabled' => in_array('completionrate', $configuredcoursecols, true)],
             ['key' => 'notstarted', 'label' => get_string('col_notstarted', 'block_itn_course_progress'), 'enabled' => in_array('notstarted', $configuredcoursecols, true)],
             ['key' => 'inprogress', 'label' => get_string('col_inprogress', 'block_itn_course_progress'), 'enabled' => in_array('inprogress', $configuredcoursecols, true)],
-            ['key' => 'enddate', 'label' => get_string('col_enddate', 'block_itn_course_progress'), 'enabled' => in_array('enddate', $configuredcoursecols, true)],
+            ['key' => 'enddate', 'label' => get_string('col_enddate', 'block_itn_course_progress'), 'enabled' => in_array('enddate', $configuredcoursecols, true), 'sortable' => true],
             ['key' => 'category', 'label' => get_string('col_category', 'block_itn_course_progress'), 'enabled' => in_array('category', $configuredcoursecols, true)],
             ['key' => 'groupscount', 'label' => get_string('col_groupscount', 'block_itn_course_progress'), 'enabled' => in_array('groupscount', $configuredcoursecols, true)],
         ];
 
         $allstudentcols = [
-            ['key' => 'index', 'label' => get_string('col_index', 'block_itn_course_progress'), 'enabled' => in_array('index', $configuredstudentcols, true)],
-            ['key' => 'name', 'label' => get_string('col_name', 'block_itn_course_progress'), 'enabled' => in_array('name', $configuredstudentcols, true)],
-            ['key' => 'status', 'label' => get_string('col_status', 'block_itn_course_progress'), 'enabled' => in_array('status', $configuredstudentcols, true)],
+            ['key' => 'index', 'label' => get_string('col_index', 'block_itn_course_progress'), 'enabled' => in_array('index', $configuredstudentcols, true), 'sortable' => false],
+            ['key' => 'name', 'label' => get_string('col_name', 'block_itn_course_progress'), 'enabled' => in_array('name', $configuredstudentcols, true), 'sortable' => true],
+            ['key' => 'status', 'label' => get_string('col_status', 'block_itn_course_progress'), 'enabled' => in_array('status', $configuredstudentcols, true), 'sortable' => true],
             ['key' => 'progress', 'label' => get_string('col_progress', 'block_itn_course_progress'), 'enabled' => in_array('progress', $configuredstudentcols, true)],
-            ['key' => 'idnumber', 'label' => get_string('col_idnumber', 'block_itn_course_progress'), 'enabled' => in_array('idnumber', $configuredstudentcols, true)],
-            ['key' => 'email', 'label' => get_string('col_email', 'block_itn_course_progress'), 'enabled' => in_array('email', $configuredstudentcols, true)],
-            ['key' => 'firstaccess', 'label' => get_string('col_firstaccess', 'block_itn_course_progress'), 'enabled' => in_array('firstaccess', $configuredstudentcols, true)],
+            ['key' => 'idnumber', 'label' => get_string('col_idnumber', 'block_itn_course_progress'), 'enabled' => in_array('idnumber', $configuredstudentcols, true), 'sortable' => true],
+            ['key' => 'email', 'label' => get_string('col_email', 'block_itn_course_progress'), 'enabled' => in_array('email', $configuredstudentcols, true), 'sortable' => true],
+            ['key' => 'firstaccess', 'label' => get_string('col_firstaccess', 'block_itn_course_progress'), 'enabled' => in_array('firstaccess', $configuredstudentcols, true), 'sortable' => true],
             ['key' => 'groupname', 'label' => get_string('col_groupname', 'block_itn_course_progress'), 'enabled' => in_array('groupname', $configuredstudentcols, true)],
-            ['key' => 'timecompleted', 'label' => get_string('col_timecompleted', 'block_itn_course_progress'), 'enabled' => in_array('timecompleted', $configuredstudentcols, true)],
+            ['key' => 'timecompleted', 'label' => get_string('col_timecompleted', 'block_itn_course_progress'), 'enabled' => in_array('timecompleted', $configuredstudentcols, true), 'sortable' => true],
         ];
 
         $uniqueid = 'itn_cp_' . uniqid();

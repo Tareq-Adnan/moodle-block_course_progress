@@ -37,21 +37,62 @@ use core_completion\progress;
  */
 class helper {
 
+    /** Capability used by Moodle core to identify users tracked in completion reports. */
+    private const TRACKED_USER_CAPABILITY = 'moodle/course:isincompletionreports';
+
+    /** Standard Moodle event emitted when a course is viewed. */
+    private const COURSE_VIEWED_EVENT = '\\core\\event\\course_viewed';
+
     /**
-     * Get IDs of users with teacher or manager roles in a course to exclude from student calculations.
+     * Return the configured activity window in seconds.
      *
-     * @param int $courseid Course ID.
-     * @return array List of user IDs.
+     * @return int Activity window in seconds.
      */
-    public static function get_teacher_ids(int $courseid): array {
-        global $DB;
-        $sql = "SELECT DISTINCT ra.userid
-                  FROM {role_assignments} ra
-                  JOIN {context} ctx ON ctx.id = ra.contextid
-                 WHERE ctx.instanceid = :courseid
-                   AND ctx.contextlevel = " . CONTEXT_COURSE . "
-                   AND ra.roleid IN (1, 2, 3, 4)";
-        return $DB->get_fieldset_sql($sql, ['courseid' => $courseid]);
+    private static function get_active_window(): int {
+        $days = max(1, (int)(get_config('block_itn_course_progress', 'activedays') ?: 30));
+        return $days * DAYSECS;
+    }
+
+    /**
+     * Get the groups the current user may report on in a course.
+     *
+     * Separate-groups mode restricts users without access-all-groups to their own
+     * groups. Other modes permit reporting across all course groups.
+     *
+     * @param stdClass $course Course record.
+     * @return array Groups keyed by group ID.
+     */
+    private static function get_accessible_groups(stdClass $course): array {
+        global $USER;
+
+        $context = context_course::instance((int)$course->id);
+        $groupmode = groups_get_course_groupmode($course);
+        if ($groupmode === SEPARATEGROUPS &&
+                !has_capability('moodle/site:accessallgroups', $context)) {
+            return groups_get_all_groups((int)$course->id, (int)$USER->id);
+        }
+
+        return groups_get_all_groups((int)$course->id);
+    }
+
+    /**
+     * Validate and return an accessible group.
+     *
+     * @param stdClass $course Course record.
+     * @param int $groupid Group ID.
+     * @return stdClass|null Group record, or null for all groups.
+     */
+    private static function validate_group(stdClass $course, int $groupid): ?stdClass {
+        if ($groupid === 0) {
+            return null;
+        }
+
+        $groups = self::get_accessible_groups($course);
+        if (!isset($groups[$groupid])) {
+            throw new \invalid_parameter_exception('The selected group is not available in this course.');
+        }
+
+        return $groups[$groupid];
     }
 
     /**
@@ -251,61 +292,70 @@ class helper {
 
         foreach ($courserecords as $course) {
             $courseid = (int)$course->id;
+            $coursecontext = context_course::instance($courseid);
+            [$trackeduserssql, $trackedparams] = get_enrolled_sql(
+                $coursecontext,
+                self::TRACKED_USER_CAPABILITY,
+                0,
+                true
+            );
 
-            // Exclude teachers/instructors from student counts.
-            $teacherids = self::get_teacher_ids($courseid);
-            $tchwhere = '';
-            $tchparams = [];
-            if (!empty($teacherids)) {
-                [$tinsql, $tchparams] = $DB->get_in_or_equal($teacherids, SQL_PARAMS_NAMED, 'tch', false);
-                $tchwhere = " AND u.id $tinsql";
-            }
+            // Moodle completion reports define the tracked learner population.
+            $enrolled = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id) FROM ($trackeduserssql) tracked",
+                $trackedparams
+            );
 
-            // 1. Enrolled students count.
-            $enrolledsql = "SELECT COUNT(DISTINCT ue.userid)
-                              FROM {user_enrolments} ue
-                              JOIN {enrol} e ON e.id = ue.enrolid
-                              JOIN {user} u ON u.id = ue.userid
-                             WHERE e.courseid = :courseid
-                               AND ue.status = 0
-                               AND u.deleted = 0
-                               $tchwhere";
-            $enrolled = (int)$DB->count_records_sql($enrolledsql, array_merge(['courseid' => $courseid], $tchparams));
+            // Active means the learner accessed this course within the configured window.
+            $activeparams = array_merge($trackedparams, [
+                'activecourseid' => $courseid,
+                'activethreshold' => time() - self::get_active_window(),
+            ]);
+            $active = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id)
+                   FROM ($trackeduserssql) tracked
+                   JOIN {user_lastaccess} ula ON ula.userid = tracked.id
+                  WHERE ula.courseid = :activecourseid
+                    AND ula.timeaccess >= :activethreshold",
+                $activeparams
+            );
 
-            // 2. Active students count (accessed course at least once).
-            $activesql = "SELECT COUNT(DISTINCT ula.userid)
-                            FROM {user_lastaccess} ula
-                            JOIN {user_enrolments} ue ON ue.userid = ula.userid
-                            JOIN {enrol} e ON e.id = ue.enrolid
-                            JOIN {user} u ON u.id = ue.userid
-                           WHERE e.courseid = :courseid
-                             AND ula.courseid = :courseid2
-                             AND ue.status = 0
-                             AND u.deleted = 0
-                             $tchwhere";
-            $active = (int)$DB->count_records_sql($activesql, array_merge(['courseid' => $courseid, 'courseid2' => $courseid], $tchparams));
+            // Started means the learner has accessed the course at least once.
+            $startedparams = array_merge($trackedparams, ['startedcourseid' => $courseid]);
+            $started = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id)
+                   FROM ($trackeduserssql) tracked
+                   JOIN {user_lastaccess} ula ON ula.userid = tracked.id
+                  WHERE ula.courseid = :startedcourseid
+                    AND ula.timeaccess > 0",
+                $startedparams
+            );
 
-            // 3. Completed students count.
-            $completedsql = "SELECT COUNT(DISTINCT cc.userid)
-                               FROM {course_completions} cc
-                               JOIN {user_enrolments} ue ON ue.userid = cc.userid
-                               JOIN {enrol} e ON e.id = ue.enrolid
-                               JOIN {user} u ON u.id = ue.userid
-                              WHERE e.courseid = :courseid
-                                AND cc.course = :courseid2
-                                AND cc.timecompleted IS NOT NULL
-                                AND cc.timecompleted > 0
-                                AND ue.status = 0
-                                AND u.deleted = 0
-                                $tchwhere";
-            $completed = (int)$DB->count_records_sql($completedsql, array_merge(['courseid' => $courseid, 'courseid2' => $courseid], $tchparams));
+            $completedparams = array_merge($trackedparams, ['completedcourseid' => $courseid]);
+            $completed = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id)
+                   FROM ($trackeduserssql) tracked
+                   JOIN {course_completions} cc ON cc.userid = tracked.id
+                  WHERE cc.course = :completedcourseid
+                    AND cc.timecompleted IS NOT NULL
+                    AND cc.timecompleted > 0",
+                $completedparams
+            );
 
-            // 4. Total course visits (from standard logstore).
-            $visitssql = "SELECT COUNT(id)
-                            FROM {logstore_standard_log}
-                           WHERE courseid = :courseid
-                             AND anonymous = 0";
-            $visits = (int)$DB->count_records_sql($visitssql, ['courseid' => $courseid]);
+            // A visit is a core course_viewed event generated by a tracked learner.
+            $visitsparams = array_merge($trackedparams, [
+                'visitcourseid' => $courseid,
+                'courseviewedevent' => self::COURSE_VIEWED_EVENT,
+            ]);
+            $visits = (int)$DB->count_records_sql(
+                "SELECT COUNT(log.id)
+                   FROM {logstore_standard_log} log
+                   JOIN ($trackeduserssql) tracked ON tracked.id = log.userid
+                  WHERE log.courseid = :visitcourseid
+                    AND log.eventname = :courseviewedevent
+                    AND log.anonymous = 0",
+                $visitsparams
+            );
 
             // 5. Groups count.
             $groupscount = (int)$DB->count_records('groups', ['courseid' => $courseid]);
@@ -324,8 +374,8 @@ class helper {
             }
 
             $completionrate = $enrolled > 0 ? (int)round(($completed / $enrolled) * 100) : 0;
-            $notstarted = max(0, $enrolled - $active);
-            $inprogress = max(0, $active - $completed);
+            $notstarted = max(0, $enrolled - $started);
+            $inprogress = max(0, $started - $completed);
 
             $courses[] = [
                 'index' => $index++,
@@ -377,25 +427,16 @@ class helper {
             return 0;
         }
 
-        // Get all enrolled active student IDs in this course (excluding teachers).
-        $teacherids = self::get_teacher_ids((int)$course->id);
-        $tchwhere = '';
-        $tchparams = ['courseid' => (int)$course->id];
-        if (!empty($teacherids)) {
-            [$tinsql, $tinparams] = $DB->get_in_or_equal($teacherids, SQL_PARAMS_NAMED, 'tch', false);
-            $tchwhere = " AND u.id $tinsql";
-            $tchparams = array_merge($tchparams, $tinparams);
-        }
-
-        $sql = "SELECT DISTINCT u.id
-                  FROM {user_enrolments} ue
-                  JOIN {enrol} e ON e.id = ue.enrolid
-                  JOIN {user} u ON u.id = ue.userid
-                 WHERE e.courseid = :courseid
-                   AND ue.status = 0
-                   AND u.deleted = 0
-                   $tchwhere";
-        $students = $DB->get_records_sql($sql, $tchparams);
+        [$trackeduserssql, $trackedparams] = get_enrolled_sql(
+            context_course::instance((int)$course->id),
+            self::TRACKED_USER_CAPABILITY,
+            0,
+            true
+        );
+        $students = $DB->get_records_sql(
+            "SELECT tracked.id FROM ($trackeduserssql) tracked",
+            $trackedparams
+        );
         if (empty($students)) {
             return 0;
         }
@@ -449,31 +490,15 @@ class helper {
             );
         }
 
-        $params = [
-            'courseid' => $courseid,
-            'courseid2' => $courseid,
-            'courseid3' => $courseid,
-        ];
-        $where = [
-            'e.courseid = :courseid',
-            'ue.status = 0',
-            'u.deleted = 0',
-        ];
-
-        // Filter out users who have teacher/manager roles in this course.
-        $teacherids = self::get_teacher_ids($courseid);
-        if (!empty($teacherids)) {
-            [$tinsql, $tinparams] = $DB->get_in_or_equal($teacherids, SQL_PARAMS_NAMED, 'tch', false);
-            $where[] = "u.id $tinsql";
-            $params = array_merge($params, $tinparams);
-        }
-
-        // Group filter (Requirement 4).
-        $groupjoin = '';
-        if ($groupid > 0) {
-            $groupjoin = "JOIN {groups_members} gm ON gm.userid = u.id AND gm.groupid = :groupid";
-            $params['groupid'] = $groupid;
-        }
+        self::validate_group($course, $groupid);
+        $coursecontext = context_course::instance($courseid);
+        [$trackeduserssql, $params] = get_enrolled_sql(
+            $coursecontext,
+            self::TRACKED_USER_CAPABILITY,
+            $groupid,
+            true
+        );
+        $where = [];
 
         // Search filter.
         if (!empty(trim($search))) {
@@ -485,15 +510,13 @@ class helper {
                              $DB->sql_like('u.email', ':search2', false) . ')';
         }
 
-        $wherestr = implode(' AND ', $where);
+        $wherestr = empty($where) ? '' : ' WHERE ' . implode(' AND ', $where);
 
         // Count total matching students.
         $countsql = "SELECT COUNT(DISTINCT u.id)
-                       FROM {user} u
-                       JOIN {user_enrolments} ue ON ue.userid = u.id
-                       JOIN {enrol} e ON e.id = ue.enrolid
-                       $groupjoin
-                      WHERE $wherestr";
+                       FROM ($trackeduserssql) tracked
+                       JOIN {user} u ON u.id = tracked.id
+                       $wherestr";
         $total = $DB->count_records_sql($countsql, $params);
         if ($total === 0) {
             return [
@@ -515,27 +538,40 @@ class helper {
             'status' => 'ula.timeaccess',
             'idnumber' => 'u.idnumber',
             'email' => 'u.email',
+            'firstaccess' => 'firstaccess',
+            'timecompleted' => 'cc.timecompleted',
             default => 'u.firstname',
         };
         $sortdirection = strtoupper($sortdir) === 'DESC' ? 'DESC' : 'ASC';
         $orderstr = "$sortcolumn $sortdirection, u.lastname $sortdirection, u.id ASC";
 
         $limitfrom = $page * $perpage;
-        $userfields = \core_user\fields::for_userpic()->including('idnumber')->get_sql('u');
+        $userfields = \core_user\fields::for_userpic()->including('idnumber', 'email')->get_sql('u');
+        $selectparams = array_merge($params, [
+            'lastaccesscourseid' => $courseid,
+            'completioncourseid' => $courseid,
+            'firstaccesscourseid' => $courseid,
+            'firstaccessevent' => self::COURSE_VIEWED_EVENT,
+        ]);
         $selectsql = "SELECT DISTINCT " . ltrim($userfields->selects, ', ') . ",
                              ula.timeaccess AS courselastaccess,
-                             ue.timestart AS firstaccess,
+                             (SELECT MIN(firstlog.timecreated)
+                                FROM {logstore_standard_log} firstlog
+                               WHERE firstlog.userid = u.id
+                                 AND firstlog.courseid = :firstaccesscourseid
+                                 AND firstlog.eventname = :firstaccessevent
+                                 AND firstlog.anonymous = 0) AS firstaccess,
                              cc.timecompleted
-                        FROM {user} u
-                        JOIN {user_enrolments} ue ON ue.userid = u.id
-                        JOIN {enrol} e ON e.id = ue.enrolid
-                        LEFT JOIN {user_lastaccess} ula ON ula.userid = u.id AND ula.courseid = :courseid2
-                        LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = :courseid3
-                        $groupjoin
-                       WHERE $wherestr
+                        FROM ($trackeduserssql) tracked
+                        JOIN {user} u ON u.id = tracked.id
+                        LEFT JOIN {user_lastaccess} ula
+                               ON ula.userid = u.id AND ula.courseid = :lastaccesscourseid
+                        LEFT JOIN {course_completions} cc
+                               ON cc.userid = u.id AND cc.course = :completioncourseid
+                        $wherestr
                     ORDER BY $orderstr";
 
-        $studentrecords = $DB->get_records_sql($selectsql, $params, $limitfrom, $perpage);
+        $studentrecords = $DB->get_records_sql($selectsql, $selectparams, $limitfrom, $perpage);
 
         $students = [];
         $index = $limitfrom + 1;
@@ -543,13 +579,20 @@ class helper {
         // Fetch groups for the students in this course.
         $userids = array_keys($studentrecords);
         $usergroups = [];
-        if (!empty($userids)) {
+        $accessiblegroups = self::get_accessible_groups($course);
+        if (!empty($userids) && !empty($accessiblegroups)) {
             [$userinsql, $userinparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'usr');
-            $usergroupparams = array_merge(['courseid' => $courseid], $userinparams);
+            [$groupinsql, $groupinparams] = $DB->get_in_or_equal(
+                array_keys($accessiblegroups),
+                SQL_PARAMS_NAMED,
+                'visiblegrp'
+            );
+            $usergroupparams = array_merge(['courseid' => $courseid], $userinparams, $groupinparams);
             $ugsql = "SELECT gm.id, gm.userid, g.name AS groupname
                         FROM {groups_members} gm
                         JOIN {groups} g ON g.id = gm.groupid
                        WHERE g.courseid = :courseid
+                         AND g.id $groupinsql
                          AND gm.userid $userinsql";
             $ugrecords = $DB->get_records_sql($ugsql, $usergroupparams);
             foreach ($ugrecords as $ug) {
@@ -566,10 +609,15 @@ class helper {
             $avatarurl = $userpicture->get_url($PAGE)->out(false);
 
             // Status Badge calculation.
-            if (!empty($stu->courselastaccess) && $stu->courselastaccess > 0) {
+            if (!empty($stu->courselastaccess) &&
+                    $stu->courselastaccess >= time() - self::get_active_window()) {
                 $statustext = get_string('status_lastactive', 'block_itn_course_progress',
                     userdate($stu->courselastaccess, '%d %b, %Y'));
                 $statusclass = 'active';
+            } else if (!empty($stu->courselastaccess)) {
+                $statustext = get_string('status_inactive', 'block_itn_course_progress',
+                    userdate($stu->courselastaccess, '%d %b, %Y'));
+                $statusclass = 'inactive';
             } else {
                 $statustext = get_string('status_never', 'block_itn_course_progress');
                 $statusclass = 'never';
@@ -637,7 +685,8 @@ class helper {
             );
         }
 
-        $groups = groups_get_all_groups($courseid);
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        $groups = self::get_accessible_groups($course);
         $result = [
             [
                 'id' => 0,
@@ -669,83 +718,58 @@ class helper {
             return [];
         }
 
-        $groups = groups_get_all_groups($courseid);
+        $groups = self::get_accessible_groups($course);
         if (empty($groups)) {
             return [];
         }
 
         $summary = [];
-        $teacherids = self::get_teacher_ids($courseid);
-        $tchwhere = '';
-        $tchparams = [];
-        if (!empty($teacherids)) {
-            [$tinsql, $tchparams] = $DB->get_in_or_equal($teacherids, SQL_PARAMS_NAMED, 'tch', false);
-            $tchwhere = " AND u.id $tinsql";
-        }
+        $coursecontext = context_course::instance($courseid);
 
         foreach ($groups as $g) {
             $groupid = (int)$g->id;
+            [$trackeduserssql, $trackedparams] = get_enrolled_sql(
+                $coursecontext,
+                self::TRACKED_USER_CAPABILITY,
+                $groupid,
+                true
+            );
 
-            // 1. Total members in group (excluding teachers).
-            $membersql = "SELECT COUNT(DISTINCT gm.userid)
-                            FROM {groups_members} gm
-                            JOIN {user_enrolments} ue ON ue.userid = gm.userid
-                            JOIN {enrol} e ON e.id = ue.enrolid
-                            JOIN {user} u ON u.id = gm.userid
-                           WHERE gm.groupid = :groupid
-                             AND e.courseid = :courseid
-                             AND ue.status = 0
-                             AND u.deleted = 0
-                             $tchwhere";
-            $members = (int)$DB->count_records_sql($membersql, array_merge(['groupid' => $groupid, 'courseid' => $courseid], $tchparams));
+            $members = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id) FROM ($trackeduserssql) tracked",
+                $trackedparams
+            );
 
-            // 2. Active members in group (excluding teachers).
-            $activesql = "SELECT COUNT(DISTINCT ula.userid)
-                            FROM {groups_members} gm
-                            JOIN {user_lastaccess} ula ON ula.userid = gm.userid
-                            JOIN {user_enrolments} ue ON ue.userid = gm.userid
-                            JOIN {enrol} e ON e.id = ue.enrolid
-                            JOIN {user} u ON u.id = gm.userid
-                           WHERE gm.groupid = :groupid
-                             AND e.courseid = :courseid
-                             AND ula.courseid = :courseid2
-                             AND ue.status = 0
-                             AND u.deleted = 0
-                             $tchwhere";
-            $active = (int)$DB->count_records_sql($activesql, array_merge(['groupid' => $groupid, 'courseid' => $courseid, 'courseid2' => $courseid], $tchparams));
+            $activeparams = array_merge($trackedparams, [
+                'batchcourseid' => $courseid,
+                'batchthreshold' => time() - self::get_active_window(),
+            ]);
+            $active = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id)
+                   FROM ($trackeduserssql) tracked
+                   JOIN {user_lastaccess} ula ON ula.userid = tracked.id
+                  WHERE ula.courseid = :batchcourseid
+                    AND ula.timeaccess >= :batchthreshold",
+                $activeparams
+            );
 
-            // 3. Completed members in group (excluding teachers).
-            $completedsql = "SELECT COUNT(DISTINCT cc.userid)
-                               FROM {groups_members} gm
-                               JOIN {course_completions} cc ON cc.userid = gm.userid
-                               JOIN {user_enrolments} ue ON ue.userid = gm.userid
-                               JOIN {enrol} e ON e.id = ue.enrolid
-                               JOIN {user} u ON u.id = gm.userid
-                              WHERE gm.groupid = :groupid
-                                AND e.courseid = :courseid
-                                AND cc.course = :courseid2
-                                AND cc.timecompleted IS NOT NULL
-                                AND cc.timecompleted > 0
-                                AND ue.status = 0
-                                AND u.deleted = 0
-                                $tchwhere";
-            $completed = (int)$DB->count_records_sql($completedsql, array_merge(['groupid' => $groupid, 'courseid' => $courseid, 'courseid2' => $courseid], $tchparams));
+            $completedparams = array_merge($trackedparams, ['batchcompletedcourseid' => $courseid]);
+            $completed = (int)$DB->count_records_sql(
+                "SELECT COUNT(tracked.id)
+                   FROM ($trackeduserssql) tracked
+                   JOIN {course_completions} cc ON cc.userid = tracked.id
+                  WHERE cc.course = :batchcompletedcourseid
+                    AND cc.timecompleted IS NOT NULL
+                    AND cc.timecompleted > 0",
+                $completedparams
+            );
 
             // 4. Batch average progress.
             $avgprogress = 0;
             if (!empty($course->enablecompletion) && $members > 0) {
                 $userids = $DB->get_fieldset_sql(
-                    "SELECT DISTINCT gm.userid
-                       FROM {groups_members} gm
-                       JOIN {user_enrolments} ue ON ue.userid = gm.userid
-                       JOIN {enrol} e ON e.id = ue.enrolid
-                       JOIN {user} u ON u.id = gm.userid
-                      WHERE gm.groupid = :groupid
-                        AND e.courseid = :courseid
-                        AND ue.status = 0
-                        AND u.deleted = 0
-                        $tchwhere",
-                    array_merge(['groupid' => $groupid, 'courseid' => $courseid], $tchparams)
+                    "SELECT tracked.id FROM ($trackeduserssql) tracked",
+                    $trackedparams
                 );
 
                 $totalprog = 0;

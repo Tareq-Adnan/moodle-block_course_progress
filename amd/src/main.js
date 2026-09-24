@@ -358,11 +358,14 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         visibleCols.forEach(function(col) {
             var th = document.createElement('th');
             th.className = 'text-nowrap user-select-none';
-            th.style.cursor = 'pointer';
             th.dataset.column = col.key;
 
-            var sortIcon = '<i class="fa fa-sort opacity-25"></i>';
-            if (self.courseSort === col.key) {
+            var sortIcon = '';
+            if (col.sortable) {
+                th.style.cursor = 'pointer';
+                sortIcon = '<i class="fa fa-sort opacity-25"></i>';
+            }
+            if (col.sortable && self.courseSort === col.key) {
                 sortIcon = self.courseSortDir === 'ASC' ?
                     '<i class="fa fa-sort-asc"></i>' :
                     '<i class="fa fa-sort-desc"></i>';
@@ -373,15 +376,17 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 '<span class="itn-sort-icon ms-2">' + sortIcon + '</span>' +
                 '</div>';
 
-            th.addEventListener('click', function() {
-                if (self.courseSort === col.key) {
-                    self.courseSortDir = self.courseSortDir === 'ASC' ? 'DESC' : 'ASC';
-                } else {
-                    self.courseSort = col.key;
-                    self.courseSortDir = 'ASC';
-                }
-                self.loadCourses();
-            });
+            if (col.sortable) {
+                th.addEventListener('click', function() {
+                    if (self.courseSort === col.key) {
+                        self.courseSortDir = self.courseSortDir === 'ASC' ? 'DESC' : 'ASC';
+                    } else {
+                        self.courseSort = col.key;
+                        self.courseSortDir = 'ASC';
+                    }
+                    self.loadCourses();
+                });
+            }
             thead.appendChild(th);
         });
 
@@ -597,11 +602,14 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             var th = document.createElement('th');
             var sortClass = self.studentSort === col.key ? ' text-primary fw-bold' : ' text-secondary';
             th.className = 'text-nowrap user-select-none' + sortClass;
-            th.style.cursor = 'pointer';
             th.dataset.column = col.key;
 
-            var sortIcon = '<i class="fa fa-sort opacity-25"></i>';
-            if (self.studentSort === col.key) {
+            var sortIcon = '';
+            if (col.sortable) {
+                th.style.cursor = 'pointer';
+                sortIcon = '<i class="fa fa-sort opacity-25"></i>';
+            }
+            if (col.sortable && self.studentSort === col.key) {
                 sortIcon = self.studentSortDir === 'ASC' ?
                     '<i class="fa fa-sort-asc"></i>' :
                     '<i class="fa fa-sort-desc"></i>';
@@ -612,15 +620,17 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 '<span class="itn-sort-icon ms-2">' + sortIcon + '</span>' +
                 '</div>';
 
-            th.addEventListener('click', function() {
-                if (self.studentSort === col.key) {
-                    self.studentSortDir = self.studentSortDir === 'ASC' ? 'DESC' : 'ASC';
-                } else {
-                    self.studentSort = col.key;
-                    self.studentSortDir = 'ASC';
-                }
-                self.loadStudents();
-            });
+            if (col.sortable) {
+                th.addEventListener('click', function() {
+                    if (self.studentSort === col.key) {
+                        self.studentSortDir = self.studentSortDir === 'ASC' ? 'DESC' : 'ASC';
+                    } else {
+                        self.studentSort = col.key;
+                        self.studentSortDir = 'ASC';
+                    }
+                    self.loadStudents();
+                });
+            }
             thead.appendChild(th);
         });
 

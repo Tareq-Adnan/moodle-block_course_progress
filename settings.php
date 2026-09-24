@@ -107,4 +107,13 @@ if ($ADMIN->fulltree) {
         get_string('settings:enablebatchsummary_desc', 'block_itn_course_progress'),
         1
     ));
+
+    // 6. Recent activity window used by the Active Students metric.
+    $settings->add(new admin_setting_configtext(
+        'block_itn_course_progress/activedays',
+        get_string('settings:activedays', 'block_itn_course_progress'),
+        get_string('settings:activedays_desc', 'block_itn_course_progress'),
+        30,
+        PARAM_INT
+    ));
 }
