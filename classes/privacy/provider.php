@@ -16,19 +16,17 @@
 
 namespace block_itn_course_progress\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_privacy\local\metadata\null_provider;
 
 /**
- * Privacy Subsystem for the ITN-BUET Course Progress block.
+ * Privacy Subsystem for the Course Progress block.
  *
  * @package    block_itn_course_progress
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements null_provider {
-
     /**
      * Get the reason why this plugin does not store any personal data.
      *

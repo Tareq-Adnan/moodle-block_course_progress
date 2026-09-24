@@ -16,8 +16,6 @@
 
 namespace block_itn_course_progress;
 
-defined('MOODLE_INTERNAL') || die();
-
 use stdClass;
 use context_system;
 use context_course;
@@ -32,11 +30,11 @@ use core_completion\progress;
  * group filtering, and completion aggregations with strict error safety.
  *
  * @package    block_itn_course_progress
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class helper {
-
     /** Capability used by Moodle core to identify users tracked in completion reports. */
     private const TRACKED_USER_CAPABILITY = 'moodle/course:isincompletionreports';
 
@@ -67,8 +65,10 @@ class helper {
 
         $context = context_course::instance((int)$course->id);
         $groupmode = groups_get_course_groupmode($course);
-        if ($groupmode === SEPARATEGROUPS &&
-                !has_capability('moodle/site:accessallgroups', $context)) {
+        if (
+            $groupmode === SEPARATEGROUPS &&
+                !has_capability('moodle/site:accessallgroups', $context)
+        ) {
             return groups_get_all_groups((int)$course->id, (int)$USER->id);
         }
 
@@ -93,6 +93,110 @@ class helper {
         }
 
         return $groups[$groupid];
+    }
+
+    /**
+     * Get enrolled tracked users, restricted to the reporter's accessible groups.
+     *
+     * In separate-groups mode, a group ID of zero means all groups available to
+     * the current reporter, not every group in the course.
+     *
+     * @param stdClass $course Course record.
+     * @param int $groupid Requested group ID, or zero for all accessible groups.
+     * @return array SQL fragment and named parameters.
+     */
+    private static function get_tracked_users_sql(stdClass $course, int $groupid = 0): array {
+        global $DB;
+
+        self::validate_group($course, $groupid);
+        $context = context_course::instance((int)$course->id);
+        [$enrolledsql, $params] = get_enrolled_sql(
+            $context,
+            self::TRACKED_USER_CAPABILITY,
+            $groupid,
+            true
+        );
+
+        $trackedsql = $enrolledsql;
+        if (
+            $groupid === 0 && groups_get_course_groupmode($course) === SEPARATEGROUPS &&
+                !has_capability('moodle/site:accessallgroups', $context)
+        ) {
+            $groupids = array_keys(self::get_accessible_groups($course));
+            if (empty($groupids)) {
+                $trackedsql = "SELECT tracked.id FROM ($enrolledsql) tracked WHERE 1 = 0";
+            } else {
+                [$groupsql, $groupparams] = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'reportgroup');
+                $trackedsql = "SELECT DISTINCT tracked.id
+                                 FROM ($enrolledsql) tracked
+                                 JOIN {groups_members} reportgm ON reportgm.userid = tracked.id
+                                WHERE reportgm.groupid $groupsql";
+                $params = array_merge($params, $groupparams);
+            }
+        }
+
+        // Users who can report on course progress are reporters, not learners.
+        [$reportersql, $reporterparams] = get_enrolled_sql(
+            $context,
+            [
+                'block/itn_course_progress:view',
+                'moodle/course:update',
+                'moodle/course:viewhiddensections',
+            ],
+            0,
+            true
+        );
+        $admincondition = '';
+        $adminparams = [];
+        static $siteadminids = null;
+        if ($siteadminids === null) {
+            $siteadminids = array_map('intval', array_keys(get_admins()));
+        }
+        if (!empty($siteadminids)) {
+            [$adminsql, $adminparams] = $DB->get_in_or_equal(
+                $siteadminids,
+                SQL_PARAMS_NAMED,
+                'excludedadmin',
+                false
+            );
+            $admincondition = " AND tracked.id $adminsql";
+        }
+        $learnersql = "SELECT DISTINCT tracked.id
+                         FROM ($trackedsql) tracked
+                        WHERE tracked.id NOT IN ($reportersql)$admincondition";
+
+        return [$learnersql, array_merge($params, $reporterparams, $adminparams)];
+    }
+
+    /**
+     * Check whether a user belongs to the learner population visible to the reporter.
+     *
+     * @param stdClass $course Course record.
+     * @param int $studentid Learner user ID.
+     * @return bool Whether the user is a visible tracked learner.
+     */
+    private static function is_tracked_learner(stdClass $course, int $studentid): bool {
+        global $DB;
+
+        [$trackedsql, $params] = self::get_tracked_users_sql($course);
+        $params['targetlearner'] = $studentid;
+
+        return $DB->record_exists_sql(
+            "SELECT tracked.id FROM ($trackedsql) tracked WHERE tracked.id = :targetlearner",
+            $params
+        );
+    }
+
+    /**
+     * Validate paging arguments used by report queries.
+     *
+     * @param int $page Zero-based page index.
+     * @param int $perpage Number of records per page.
+     */
+    private static function validate_paging(int $page, int $perpage): void {
+        if ($page < 0 || !in_array($perpage, [5, 10, 25, 50], true)) {
+            throw new \invalid_parameter_exception('Invalid paging parameters.');
+        }
     }
 
     /**
@@ -127,8 +231,10 @@ class helper {
         }
 
         // Also permit if user has editingteacher or teacher capability in this course.
-        if (has_capability('moodle/course:update', $coursecontext, $targetuserid) ||
-            has_capability('moodle/course:viewhiddensections', $coursecontext, $targetuserid)) {
+        if (
+            has_capability('moodle/course:update', $coursecontext, $targetuserid) ||
+            has_capability('moodle/course:viewhiddensections', $coursecontext, $targetuserid)
+        ) {
             return true;
         }
 
@@ -151,9 +257,11 @@ class helper {
         }
 
         // Site administrators or site config managers.
-        if (is_siteadmin($targetuserid) ||
+        if (
+            is_siteadmin($targetuserid) ||
             has_capability('moodle/site:config', context_system::instance(), $targetuserid) ||
-            has_capability('block/itn_course_progress:view', context_system::instance(), $targetuserid)) {
+            has_capability('block/itn_course_progress:view', context_system::instance(), $targetuserid)
+        ) {
             return true;
         }
 
@@ -197,8 +305,13 @@ class helper {
     ): array {
         global $DB, $USER;
 
+        self::validate_paging($page, $perpage);
+
         $currentuserid = $userid > 0 ? $userid : (int)$USER->id;
-        $isadmin = is_siteadmin($currentuserid) || has_capability('moodle/site:config', context_system::instance(), $currentuserid);
+        $systemcontext = context_system::instance();
+        $hasglobalaccess = is_siteadmin($currentuserid) ||
+            has_capability('moodle/site:config', $systemcontext, $currentuserid) ||
+            has_capability('block/itn_course_progress:view', $systemcontext, $currentuserid);
 
         // Build base courses SQL.
         $params = [
@@ -207,7 +320,7 @@ class helper {
         $where = ['c.id != :siteid', 'c.visible = 1'];
 
         // Role-based course restriction for non-admins.
-        if (!$isadmin) {
+        if (!$hasglobalaccess) {
             $mycourses = enrol_get_all_users_courses($currentuserid, true, null, 'visible DESC, sortorder ASC');
             $allowedids = [];
             foreach ($mycourses as $c) {
@@ -267,7 +380,8 @@ class helper {
         // Query course records with pagination.
         $limitfrom = $page * $perpage;
         $courserecords = $DB->get_records_sql(
-            "SELECT c.id, c.fullname, c.shortname, c.startdate, c.enddate, c.category, c.enablecompletion
+            "SELECT c.id, c.fullname, c.shortname, c.startdate, c.enddate, c.category, c.enablecompletion,
+                    c.groupmode, c.groupmodeforce
                FROM {course} c
               WHERE $wherestr
            ORDER BY $orderstr",
@@ -293,12 +407,7 @@ class helper {
         foreach ($courserecords as $course) {
             $courseid = (int)$course->id;
             $coursecontext = context_course::instance($courseid);
-            [$trackeduserssql, $trackedparams] = get_enrolled_sql(
-                $coursecontext,
-                self::TRACKED_USER_CAPABILITY,
-                0,
-                true
-            );
+            [$trackeduserssql, $trackedparams] = self::get_tracked_users_sql($course);
 
             // Moodle completion reports define the tracked learner population.
             $enrolled = (int)$DB->count_records_sql(
@@ -368,7 +477,7 @@ class helper {
             if ($loadprogress && $hascompletion && $enrolled > 0) {
                 $progressval = self::calculate_course_average_progress($course);
                 $progressloaded = true;
-            } elseif ($loadprogress && !$hascompletion) {
+            } else if ($loadprogress && !$hascompletion) {
                 $progressloaded = true;
                 $progressval = 0;
             }
@@ -380,8 +489,16 @@ class helper {
             $courses[] = [
                 'index' => $index++,
                 'id' => $courseid,
-                'coursename' => html_entity_decode(format_string($course->fullname, true, ['context' => $coursecontext]), ENT_QUOTES, 'UTF-8'),
-                'shortname' => html_entity_decode(format_string($course->shortname, true, ['context' => $coursecontext]), ENT_QUOTES, 'UTF-8'),
+                'coursename' => html_entity_decode(
+                    format_string($course->fullname, true, ['context' => $coursecontext]),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ),
+                'shortname' => html_entity_decode(
+                    format_string($course->shortname, true, ['context' => $coursecontext]),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ),
                 'startdate' => $course->startdate > 0 ? userdate($course->startdate, '%d %b, %Y') : '-',
                 'startdate_raw' => (int)$course->startdate,
                 'enddate' => $course->enddate > 0 ? userdate($course->enddate, '%d %b, %Y') : '-',
@@ -427,12 +544,7 @@ class helper {
             return 0;
         }
 
-        [$trackeduserssql, $trackedparams] = get_enrolled_sql(
-            context_course::instance((int)$course->id),
-            self::TRACKED_USER_CAPABILITY,
-            0,
-            true
-        );
+        [$trackeduserssql, $trackedparams] = self::get_tracked_users_sql($course);
         $students = $DB->get_records_sql(
             "SELECT tracked.id FROM ($trackeduserssql) tracked",
             $trackedparams
@@ -478,6 +590,8 @@ class helper {
     ): array {
         global $DB, $PAGE;
 
+        self::validate_paging($page, $perpage);
+
         $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 
         // Security check.
@@ -490,14 +604,8 @@ class helper {
             );
         }
 
-        self::validate_group($course, $groupid);
         $coursecontext = context_course::instance($courseid);
-        [$trackeduserssql, $params] = get_enrolled_sql(
-            $coursecontext,
-            self::TRACKED_USER_CAPABILITY,
-            $groupid,
-            true
-        );
+        [$trackeduserssql, $params] = self::get_tracked_users_sql($course, $groupid);
         $where = [];
 
         // Search filter.
@@ -528,7 +636,11 @@ class helper {
                 'to' => 0,
                 'course' => [
                     'id' => $course->id,
-                    'fullname' => html_entity_decode(format_string($course->fullname, true, ['context' => $coursecontext]), ENT_QUOTES, 'UTF-8'),
+                    'fullname' => html_entity_decode(
+                        format_string($course->fullname, true, ['context' => $coursecontext]),
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ),
                 ],
             ];
         }
@@ -609,14 +721,22 @@ class helper {
             $avatarurl = $userpicture->get_url($PAGE)->out(false);
 
             // Status Badge calculation.
-            if (!empty($stu->courselastaccess) &&
-                    $stu->courselastaccess >= time() - self::get_active_window()) {
-                $statustext = get_string('status_lastactive', 'block_itn_course_progress',
-                    userdate($stu->courselastaccess, '%d %b, %Y'));
+            if (
+                !empty($stu->courselastaccess) &&
+                    $stu->courselastaccess >= time() - self::get_active_window()
+            ) {
+                $statustext = get_string(
+                    'status_lastactive',
+                    'block_itn_course_progress',
+                    userdate($stu->courselastaccess, '%d %b, %Y')
+                );
                 $statusclass = 'active';
             } else if (!empty($stu->courselastaccess)) {
-                $statustext = get_string('status_inactive', 'block_itn_course_progress',
-                    userdate($stu->courselastaccess, '%d %b, %Y'));
+                $statustext = get_string(
+                    'status_inactive',
+                    'block_itn_course_progress',
+                    userdate($stu->courselastaccess, '%d %b, %Y')
+                );
                 $statusclass = 'inactive';
             } else {
                 $statustext = get_string('status_never', 'block_itn_course_progress');
@@ -662,7 +782,11 @@ class helper {
             'to' => $to,
             'course' => [
                 'id' => $course->id,
-                'fullname' => html_entity_decode(format_string($course->fullname, true, ['context' => context_course::instance($courseid)]), ENT_QUOTES, 'UTF-8'),
+                'fullname' => html_entity_decode(
+                    format_string($course->fullname, true, ['context' => context_course::instance($courseid)]),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ),
             ],
         ];
     }
@@ -681,7 +805,7 @@ class helper {
     public static function get_student_progress(int $studentid, int $sourcecourseid): array {
         global $DB, $PAGE, $USER;
 
-        $DB->get_record('course', ['id' => $sourcecourseid], 'id', MUST_EXIST);
+        $sourcecourse = $DB->get_record('course', ['id' => $sourcecourseid], '*', MUST_EXIST);
         $sourcecontext = context_course::instance($sourcecourseid);
         if (!self::can_view_course($sourcecourseid)) {
             throw new \required_capability_exception(
@@ -693,8 +817,10 @@ class helper {
         }
 
         $student = $DB->get_record('user', ['id' => $studentid, 'deleted' => 0], '*', MUST_EXIST);
-        if (!empty($student->suspended) ||
-                !is_enrolled($sourcecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+        if (
+            !empty($student->suspended) ||
+                !self::is_tracked_learner($sourcecourse, $studentid)
+        ) {
             throw new \invalid_parameter_exception('The selected user is not an active learner in this course.');
         }
 
@@ -736,7 +862,7 @@ class helper {
         $enrolledcourses = enrol_get_all_users_courses(
             $studentid,
             true,
-            'enablecompletion,enddate,visible,category',
+            'enablecompletion,enddate,visible,category,groupmode,groupmodeforce',
             'sortorder ASC'
         );
         foreach ($enrolledcourses as $enrolledcourse) {
@@ -746,11 +872,13 @@ class helper {
             }
 
             $coursecontext = context_course::instance($courseid);
-            if (!is_enrolled($coursecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+            if (!self::is_tracked_learner($enrolledcourse, $studentid)) {
                 continue;
             }
-            if (empty($enrolledcourse->visible) &&
-                    !has_capability('moodle/course:viewhiddencourses', $coursecontext)) {
+            if (
+                empty($enrolledcourse->visible) &&
+                    !has_capability('moodle/course:viewhiddencourses', $coursecontext)
+            ) {
                 continue;
             }
 
@@ -916,6 +1044,7 @@ class helper {
     ): array {
         global $CFG, $DB;
 
+        $sourcecourse = $DB->get_record('course', ['id' => $sourcecourseid], '*', MUST_EXIST);
         $sourcecontext = context_course::instance($sourcecourseid);
         if (!self::can_view_course($sourcecourseid)) {
             throw new \required_capability_exception(
@@ -927,8 +1056,10 @@ class helper {
         }
 
         $student = $DB->get_record('user', ['id' => $studentid, 'deleted' => 0], 'id, suspended', MUST_EXIST);
-        if (!empty($student->suspended) ||
-                !is_enrolled($sourcecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+        if (
+            !empty($student->suspended) ||
+                !self::is_tracked_learner($sourcecourse, $studentid)
+        ) {
             throw new \invalid_parameter_exception('The selected user is not an active learner in the source course.');
         }
 
@@ -942,7 +1073,7 @@ class helper {
                 ''
             );
         }
-        if (!is_enrolled($coursecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+        if (!self::is_tracked_learner($course, $studentid)) {
             throw new \invalid_parameter_exception('The selected user is not an active learner in the target course.');
         }
 
@@ -1153,7 +1284,7 @@ class helper {
             [
                 'id' => 0,
                 'name' => get_string('allgroups', 'block_itn_course_progress'),
-            ]
+            ],
         ];
 
         foreach ($groups as $g) {
@@ -1186,16 +1317,9 @@ class helper {
         }
 
         $summary = [];
-        $coursecontext = context_course::instance($courseid);
-
         foreach ($groups as $g) {
             $groupid = (int)$g->id;
-            [$trackeduserssql, $trackedparams] = get_enrolled_sql(
-                $coursecontext,
-                self::TRACKED_USER_CAPABILITY,
-                $groupid,
-                true
-            );
+            [$trackeduserssql, $trackedparams] = self::get_tracked_users_sql($course, $groupid);
 
             $members = (int)$DB->count_records_sql(
                 "SELECT COUNT(tracked.id) FROM ($trackeduserssql) tracked",

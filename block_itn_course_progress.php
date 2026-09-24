@@ -18,17 +18,15 @@
  * Main block class for Course Progress.
  *
  * @package    block_itn_course_progress
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Course Progress block definition.
  */
 class block_itn_course_progress extends block_base {
-
     /**
      * Initialize block.
      *
@@ -113,10 +111,8 @@ class block_itn_course_progress extends block_base {
         $this->content->footer = '';
 
         // Prepare renderable.
-        global $PAGE;
-        $page = $this->page ?? $PAGE;
         $renderable = new \block_itn_course_progress\output\main($this->config);
-        $renderer = $page->get_renderer('block_itn_course_progress');
+        $renderer = $this->page->get_renderer('block_itn_course_progress');
 
         $this->content->text = $renderer->render($renderable);
 

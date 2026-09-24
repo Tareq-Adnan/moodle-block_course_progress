@@ -16,8 +16,13 @@
  */
 
 /**
- * Scoped styles for ITN-BUET Course Progress block.
+ * Scoped styles for Course Progress block.
  * Matches reference UI aesthetics cleanly without interfering with Moodle theme cards.
+ *
+ * @package    block_itn_course_progress
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 .itn-course-progress-widget {
@@ -383,9 +388,10 @@
     opacity: 0;
     transform: translateZ(0);
     will-change: left, width;
-    transition: left 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                opacity 0.2s ease;
+    transition:
+        left 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+        width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+        opacity 0.2s ease;
 }
 
 .itn-course-progress-widget .itn-tab-indicator.is-visible {
@@ -410,10 +416,10 @@
 
 @media (prefers-reduced-motion: reduce) {
     .itn-course-progress-widget .itn-tab-indicator {
-        transition: none !important;
+        transition: none;
     }
     .itn-course-progress-widget .itn-student-tab-panel:not(.d-none) {
-        animation: none !important;
+        animation: none;
     }
 }
 

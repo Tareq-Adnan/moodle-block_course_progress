@@ -1,0 +1,17 @@
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDE configurations
+.idea/
+.vscode/
+*.swp
+*~
+
+# Dependencies
+node_modules/
+
+# Temporary / testing artifacts
+/scratch/
+/tests/fixtures/*.tmp
+*.log

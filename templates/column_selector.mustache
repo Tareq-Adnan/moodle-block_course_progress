@@ -18,13 +18,17 @@
     @template block_itn_course_progress/column_selector
 
     Column visibility toggle popover.
+
+    Example context (json):
+    {}
 }}
 <div class="dropdown-menu shadow-sm p-3 end-0 itn-column-picker-dropdown"
      style="display: none; min-width: 220px; position: absolute; top: calc(100% + 4px); right: 0; z-index: 1055; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px;"
      data-region="column-picker-menu">
     <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
         <span class="fw-bold small text-dark">{{#str}}columns, block_itn_course_progress{{/str}}</span>
-        <button type="button" class="btn-close btn-close-sm" data-action="close-column-picker" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-sm" data-action="close-column-picker"
+                aria-label="{{#str}}closecolumnselector, block_itn_course_progress{{/str}}"></button>
     </div>
     <div class="d-flex flex-column gap-2" data-region="column-options-list">
         <!-- Rendered dynamically by JavaScript based on active view -->
@@ -35,4 +39,3 @@
         </button>
     </div>
 </div>
-

@@ -4,11 +4,33 @@
     Moodle is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
     @template block_itn_course_progress/student_progress
 
     Individual learner progress across enrolled courses.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * data-region
+    * data-action
+
+    Context variables required for this template:
+    * defaultavatarurl
+
+    Example context (json):
+    {
+        "defaultavatarurl": "https://example.com/avatar.png"
+    }
 }}
 <section class="itn-view-student-progress d-none" data-region="view-student-progress">
     <div class="itn-student-progress-topbar d-flex align-items-center justify-content-between mb-4">
@@ -25,9 +47,13 @@
 
     <article class="itn-student-profile-card mb-5">
         <div class="itn-profile-summary d-flex flex-wrap align-items-center">
-            <img class="itn-student-progress-avatar" data-region="student-progress-avatar" src="" alt="">
+            <img class="itn-student-progress-avatar" data-region="student-progress-avatar"
+                 src="{{{defaultavatarurl}}}"
+                 alt="{{#str}}loadingprogressdata, block_itn_course_progress{{/str}}">
             <div class="itn-profile-identity flex-grow-1">
-                <h2 class="itn-profile-name mb-3" data-region="student-progress-name"></h2>
+                <h2 class="itn-profile-name mb-3" data-region="student-progress-name">
+                    {{#str}}loadingprogressdata, block_itn_course_progress{{/str}}
+                </h2>
                 <p class="itn-profile-lastaccess mb-0">
                     <strong>{{#str}}studentprogress_lastaccess, block_itn_course_progress{{/str}}</strong>
                     <span data-region="student-progress-lastaccess"></span>
@@ -41,7 +67,7 @@
                         {{#str}}studentprogress_addcontact, block_itn_course_progress{{/str}}
                     </span>
                 </button>
-                <a class="btn btn-primary itn-profile-btn" data-region="student-progress-message" target="_blank"
+                <a href="#" class="btn btn-primary itn-profile-btn" data-region="student-progress-message" target="_blank"
                    rel="noopener noreferrer">
                     <i class="fa fa-comment-o me-2" aria-hidden="true"></i>
                     {{#str}}studentprogress_sendmessage, block_itn_course_progress{{/str}}
@@ -49,7 +75,7 @@
             </div>
         </div>
 
-        <div class="itn-profile-stats row g-0"
+        <div class="itn-profile-stats row g-0" role="group"
              aria-label="{{#str}}studentprogress_stats, block_itn_course_progress{{/str}}">
             <div class="col-6 col-md-3 itn-profile-stat">
                 <strong data-region="student-stat-contacts">0</strong>
@@ -82,7 +108,7 @@
                 data-region="student-details-tab" role="tab" aria-selected="false">
             {{#str}}studentprogress_moredetails, block_itn_course_progress{{/str}}
         </button>
-        <a data-region="student-profile-link" target="_blank" rel="noopener noreferrer">
+        <a href="#" data-region="student-profile-link" target="_blank" rel="noopener noreferrer">
             {{#str}}studentprogress_viewprofile, block_itn_course_progress{{/str}}
         </a>
         <span class="itn-tab-indicator" data-region="tab-indicator" aria-hidden="true"></span>

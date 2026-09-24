@@ -15,17 +15,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details for the ITN-BUET Course Progress block.
+ * Version details for the Course Progress block.
  *
  * @package    block_itn_course_progress
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_itn_course_progress';
-$plugin->version   = 2026092406;
+$plugin->version   = 2026092407;
 $plugin->requires  = 2025041400; // Requires Moodle 5.0+.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.2';
+$plugin->release   = '1.3.3';

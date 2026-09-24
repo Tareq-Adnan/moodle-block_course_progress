@@ -17,7 +17,8 @@
  * Client-side controller for Course Progress block.
  *
  * @module     block_itn_course_progress/main
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -202,6 +203,21 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(text, 'text/html');
         return doc.body.textContent || text;
+    };
+
+    /**
+     * Escape plain text before inserting it into generated markup.
+     *
+     * @param {String} text Text to escape.
+     * @return {String} HTML-safe text.
+     */
+    CourseProgress.prototype.escapeHtml = function(text) {
+        return this.decodeHtml(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     };
 
     /**
@@ -475,7 +491,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         tbody.innerHTML = '';
         if (!data.courses || data.courses.length === 0) {
             var emptyRow = document.createElement('tr');
-            var emptyMsg = '<i class="fa fa-folder-open-o me-2"></i> No courses found';
+            var emptyMsg = '<i class="fa fa-folder-open-o me-2"></i> ' + self.labels.nocoursestable;
             emptyRow.innerHTML = '<td colspan="' + visibleCols.length + '" class="text-center py-4 text-muted">' +
                 emptyMsg + '</td>';
             tbody.appendChild(emptyRow);
@@ -629,7 +645,11 @@ define(['block_itn_course_progress/repository'], function(Repository) {
     CourseProgress.prototype.loadGroups = function(courseid) {
         var self = this;
         var select = this.dom.groupFilterSelect;
-        select.innerHTML = '<option value="0">Loading batches...</option>';
+        select.innerHTML = '';
+        var loadingOption = document.createElement('option');
+        loadingOption.value = '0';
+        loadingOption.textContent = self.labels.loadingbatches;
+        select.appendChild(loadingOption);
 
         Repository.getGroups(courseid).then(function(groups) {
             select.innerHTML = '';
@@ -642,7 +662,11 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             select.value = self.selectedGroupId;
             return groups;
         }).catch(function() {
-            select.innerHTML = '<option value="0">All Batches</option>';
+            select.innerHTML = '';
+            var fallbackOption = document.createElement('option');
+            fallbackOption.value = '0';
+            fallbackOption.textContent = self.labels.allgroups;
+            select.appendChild(fallbackOption);
         });
     };
 
@@ -737,7 +761,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         tbody.innerHTML = '';
         if (!data.students || data.students.length === 0) {
             var emptyRow = document.createElement('tr');
-            var msg = self.selectedGroupId > 0 ? 'No students found in this group' : 'No students found in this course';
+            var msg = self.selectedGroupId > 0 ? self.labels.nostudentsingroup : self.labels.nostudents;
             emptyRow.innerHTML = '<td colspan="' + visibleCols.length + '" class="text-center py-4 text-muted">' +
                 '<i class="fa fa-user-times me-2"></i> ' + msg +
                 '</td>';
@@ -767,7 +791,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         var messageLink = document.createElement('a');
                         messageLink.href = stu.messageurl;
                         messageLink.className = 'itn-student-email-link ms-2';
-                        messageLink.title = self.labels.sendmessage || 'Send message';
+                        messageLink.title = self.labels.sendmessage;
                         messageLink.target = '_blank';
                         messageLink.rel = 'noopener noreferrer';
                         messageLink.innerHTML = '<i class="fa fa-envelope" aria-hidden="true"></i>';
@@ -898,7 +922,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         if (!data.courses || data.courses.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'alert alert-secondary text-center';
-            empty.textContent = labels.nocourses || 'No enrolled courses are available.';
+            empty.textContent = labels.nocourses;
             this.dom.studentProgressCourses.appendChild(empty);
             return;
         }
@@ -968,7 +992,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             progressTrack.appendChild(progressBar);
             const completionLabel = document.createElement('strong');
             completionLabel.className = 'itn-course-completed-label';
-            completionLabel.textContent = `${progress}% ${labels.coursecompleted || 'Course Completed'}`;
+            completionLabel.textContent = `${progress}% ${labels.coursecompleted}`;
             completion.appendChild(activitySummary);
             completion.appendChild(progressTrack);
             completion.appendChild(completionLabel);
@@ -977,12 +1001,12 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             courseMeta.className = 'itn-course-meta';
             if (course.lastaccess !== '-') {
                 const lastAccess = document.createElement('span');
-                lastAccess.textContent = `${labels.lastcourseaccess || 'Last access'}: ${course.lastaccess}`;
+                lastAccess.textContent = `${labels.lastcourseaccess}: ${course.lastaccess}`;
                 courseMeta.appendChild(lastAccess);
             }
             if (course.timecompleted !== '-') {
                 const completed = document.createElement('span');
-                completed.textContent = `${labels.completeddate || 'Completed'}: ${course.timecompleted}`;
+                completed.textContent = `${labels.completeddate}: ${course.timecompleted}`;
                 courseMeta.appendChild(completed);
             }
 
@@ -991,7 +1015,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             courseLink.href = course.courseurl;
             courseLink.target = '_blank';
             courseLink.rel = 'noopener noreferrer';
-            courseLink.textContent = labels.viewcourse || 'View course';
+            courseLink.textContent = labels.viewcourse;
 
             const activityPanel = document.createElement('div');
             activityPanel.className = 'itn-activity-panel';
@@ -1002,7 +1026,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             const activityButton = document.createElement('button');
             activityButton.type = 'button';
             activityButton.className = 'btn btn-outline-secondary itn-activity-details-btn';
-            activityButton.textContent = labels.activitydetails || 'Activity details';
+            activityButton.textContent = labels.activitydetails;
             activityButton.setAttribute('aria-expanded', 'false');
             activityButton.setAttribute('aria-controls', activityPanel.id);
             activityButton.addEventListener('click', () => {
@@ -1045,13 +1069,11 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 this.collapseActivityPanel(panel);
             }
             button.setAttribute('aria-expanded', opening ? 'true' : 'false');
-            button.textContent = opening ?
-                (labels.hideactivities || 'Hide activities') :
-                (labels.activitydetails || 'Activity details');
+            button.textContent = opening ? labels.hideactivities : labels.activitydetails;
             return;
         }
 
-        panel.textContent = labels.loadingactivities || 'Loading activities...';
+        panel.textContent = labels.loadingactivities;
         this.expandActivityPanel(panel);
         button.disabled = true;
         button.setAttribute('aria-expanded', 'true');
@@ -1064,13 +1086,13 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             this.renderStudentActivities(panel, response);
             panel.dataset.loaded = 'true';
             button.disabled = false;
-            button.textContent = labels.hideactivities || 'Hide activities';
+            button.textContent = labels.hideactivities;
             return response;
         }).catch((error) => {
             this.collapseActivityPanel(panel);
             button.disabled = false;
             button.setAttribute('aria-expanded', 'false');
-            button.textContent = labels.activitydetails || 'Activity details';
+            button.textContent = labels.activitydetails;
             this.showError(error);
         });
     };
@@ -1173,7 +1195,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         if (!data.activities || data.activities.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'itn-activity-empty';
-            empty.textContent = labels.noactivities || 'No completion-tracked activities are configured.';
+            empty.textContent = labels.noactivities;
             inner.appendChild(empty);
             return;
         }
@@ -1181,7 +1203,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         const header = document.createElement('div');
         header.className = 'itn-activity-panel-header';
         const heading = document.createElement('h5');
-        heading.textContent = labels.trackedactivities || 'Tracked activities';
+        heading.textContent = labels.trackedactivities;
         const count = document.createElement('span');
         count.className = 'itn-activity-count';
         count.textContent = String(data.totalactivities);
@@ -1233,10 +1255,10 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             const meta = document.createElement('dl');
             meta.className = 'itn-activity-meta';
             [
-                [labels.grade || 'Grade', activity.isgraded ? activity.grade : '-'],
-                [labels.completeddate || 'Completed', activity.completiondate],
-                [labels.lastinteraction || 'Last interaction', activity.lastinteraction],
-                [labels.interactions || 'Interactions', String(activity.interactions)]
+                [labels.grade, activity.isgraded ? activity.grade : '-'],
+                [labels.completeddate, activity.completiondate],
+                [labels.lastinteraction, activity.lastinteraction],
+                [labels.interactions, String(activity.interactions)]
             ].forEach(([label, value]) => {
                 const group = document.createElement('div');
                 const term = document.createElement('dt');
@@ -1256,7 +1278,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 link.href = activity.activityurl;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
-                link.textContent = labels.openactivity || 'Open activity';
+                link.textContent = labels.openactivity;
                 action.appendChild(link);
             }
 
@@ -1352,9 +1374,9 @@ define(['block_itn_course_progress/repository'], function(Repository) {
 
         const labels = this.labels;
         const stateLabels = {
-            available: labels.addcontact || 'Add to contacts',
-            pending: labels.contactpending || 'Contact request pending',
-            contact: labels.alreadycontact || 'Already a contact'
+            available: labels.addcontact,
+            pending: labels.contactpending,
+            contact: labels.alreadycontact
         };
         this.dom.studentContactLabel.textContent = stateLabels[student.contactstate] || '';
     };
@@ -1374,7 +1396,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 throw new Error(response.warnings[0].message);
             }
             student.contactstate = 'pending';
-            this.dom.studentContactLabel.textContent = this.labels.contactsucceeded || 'Contact request sent';
+            this.dom.studentContactLabel.textContent = this.labels.contactsucceeded;
             return response;
         }).catch((error) => {
             this.dom.studentContactButton.disabled = false;
@@ -1398,14 +1420,15 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             return;
         }
 
-        var loadingText = '<i class="fa fa-spinner fa-spin me-2"></i> Loading batch summary...';
+        var loadingText = '<i class="fa fa-spinner fa-spin me-2"></i> ' +
+            self.escapeHtml(self.labels.batchloading);
         area.innerHTML = '<div class="p-3 text-center text-muted">' + loadingText + '</div>';
         area.classList.remove('d-none');
 
         Repository.getBatchSummary(this.selectedCourse.id).then(function(batches) {
             if (!batches || batches.length === 0) {
                 var noBatchesAlert = '<div class="alert alert-secondary mb-0 p-2 small">' +
-                    'No groups configured for this course.</div>';
+                    self.escapeHtml(self.labels.nobatches) + '</div>';
                 area.innerHTML = noBatchesAlert;
                 return batches;
             }
@@ -1414,31 +1437,28 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 '<div class="d-flex justify-content-between align-items-center mb-3">' +
                     '<div class="d-flex align-items-center gap-2">' +
                         '<i class="fa fa-users text-primary fs-5" aria-hidden="true"></i>' +
-                        '<h6 class="mb-0 fw-bold text-primary">Batch Performance Comparison</h6>' +
+                        '<h6 class="mb-0 fw-bold text-primary">' + self.escapeHtml(self.labels.batchtitle) + '</h6>' +
                     '</div>' +
                     '<button type="button" class="btn btn-sm btn-outline-secondary itn-close-batch-btn">' +
-                        '<i class="fa fa-times me-1"></i> Close' +
+                        '<i class="fa fa-times me-1"></i> ' + self.escapeHtml(self.labels.batchclose) +
                     '</button>' +
                 '</div>' +
                 '<div class="table-responsive">' +
                     '<table class="table itn-data-table align-middle mb-0">' +
                         '<thead>' +
                             '<tr>' +
-                                '<th class="text-start">Batch Name</th>' +
-                                '<th class="text-center">Members</th>' +
-                                '<th class="text-center">Active</th>' +
-                                '<th class="text-center">Completed</th>' +
-                                '<th class="text-center">Rate</th>' +
-                                '<th class="text-center">Average Progress</th>' +
+                                '<th class="text-start">' + self.escapeHtml(self.labels.batchname) + '</th>' +
+                                '<th class="text-center">' + self.escapeHtml(self.labels.batchmembers) + '</th>' +
+                                '<th class="text-center">' + self.escapeHtml(self.labels.batchactive) + '</th>' +
+                                '<th class="text-center">' + self.escapeHtml(self.labels.batchcompleted) + '</th>' +
+                                '<th class="text-center">' + self.escapeHtml(self.labels.batchrate) + '</th>' +
+                                '<th class="text-center">' + self.escapeHtml(self.labels.batchprogress) + '</th>' +
                             '</tr>' +
                         '</thead>' +
                         '<tbody>';
 
             batches.forEach(function(b) {
-                var safeBatchName = self.decodeHtml(b.batchname)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;');
+                var safeBatchName = self.escapeHtml(b.batchname);
                 html += '<tr>' +
                     '<td class="fw-bold text-dark text-start">' + safeBatchName + '</td>' +
                     '<td class="text-center fw-bold text-dark">' + b.members + '</td>' +
@@ -1466,7 +1486,8 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             }
             return batches;
         }).catch(function() {
-            var errAlert = '<div class="alert alert-warning mb-0 p-2 small">Unable to load batch summary.</div>';
+            var errAlert = '<div class="alert alert-warning mb-0 p-2 small">' +
+                self.escapeHtml(self.labels.batcherror) + '</div>';
             area.innerHTML = errAlert;
         });
     };
@@ -1511,7 +1532,10 @@ define(['block_itn_course_progress/repository'], function(Repository) {
      */
     CourseProgress.prototype.renderPagination = function(listContainer, infoContainer, data, onPageClick) {
         var startCount = data.total > 0 ? data.from : 0;
-        infoContainer.textContent = 'Showing ' + startCount + ' to ' + data.to + ' of ' + data.total + ' entries';
+        infoContainer.textContent = this.labels.showingentries
+            .replace('__from__', startCount)
+            .replace('__to__', data.to)
+            .replace('__total__', data.total);
         listContainer.innerHTML = '';
 
         var totalPages = Math.ceil(data.total / data.perpage);
@@ -1522,7 +1546,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         // Previous button.
         var prevLi = document.createElement('li');
         prevLi.className = 'page-item' + (data.page === 0 ? ' disabled' : '');
-        prevLi.innerHTML = '<a class="page-link" href="#">Previous</a>';
+        prevLi.innerHTML = '<a class="page-link" href="#">' + this.escapeHtml(this.labels.previous) + '</a>';
         prevLi.addEventListener('click', function(e) {
             e.preventDefault();
             if (data.page > 0) {
@@ -1550,7 +1574,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         // Next button.
         var nextLi = document.createElement('li');
         nextLi.className = 'page-item' + (data.page >= totalPages - 1 ? ' disabled' : '');
-        nextLi.innerHTML = '<a class="page-link" href="#">Next</a>';
+        nextLi.innerHTML = '<a class="page-link" href="#">' + this.escapeHtml(this.labels.next) + '</a>';
         nextLi.addEventListener('click', function(e) {
             e.preventDefault();
             if (data.page < totalPages - 1) {
@@ -1573,9 +1597,10 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 '<div class="d-inline-flex flex-column align-items-center justify-content-center text-muted">' +
                     '<div class="spinner-border text-primary mb-2" role="status" ' +
                         'style="width: 2rem; height: 2rem; border-width: 0.2em;">' +
-                        '<span class="visually-hidden">Loading...</span>' +
+                        '<span class="visually-hidden">' + this.escapeHtml(this.labels.loadingprogressdata) + '</span>' +
                     '</div>' +
-                    '<span class="small fw-medium text-secondary">Loading progress data...</span>' +
+                    '<span class="small fw-medium text-secondary">' +
+                        this.escapeHtml(this.labels.loadingprogressdata) + '</span>' +
                 '</div>' +
             '</td>' +
         '</tr>';
@@ -1726,7 +1751,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
      */
     CourseProgress.prototype.showError = function(error) {
         if (this.dom.alertContainer) {
-            var msg = error && error.message ? error.message : 'An error occurred while loading data.';
+            var msg = error && error.message ? error.message : this.labels.errorgeneric;
             this.dom.alertText.textContent = msg;
             this.dom.alertContainer.classList.remove('d-none');
         }

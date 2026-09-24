@@ -18,17 +18,15 @@
  * Block instance configuration form.
  *
  * @package    block_itn_course_progress
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Course Progress block edit form.
  */
 class block_itn_course_progress_edit_form extends block_edit_form {
-
     /**
      * Define form elements for block instance settings.
      *
@@ -37,13 +35,19 @@ class block_itn_course_progress_edit_form extends block_edit_form {
     protected function specific_definition($mform): void {
         $mform->addElement('header', 'configheader', get_string('blocksettings', 'block'));
 
-        $mform->addElement('selectyesno', 'config_defaultloadprogress',
-            get_string('settings:defaultloadprogress', 'block_itn_course_progress'));
+        $mform->addElement(
+            'selectyesno',
+            'config_defaultloadprogress',
+            get_string('settings:defaultloadprogress', 'block_itn_course_progress')
+        );
         $mform->setDefault('config_defaultloadprogress', 1);
 
-        $mform->addElement('select', 'config_defaultperpage',
+        $mform->addElement(
+            'select',
+            'config_defaultperpage',
             get_string('settings:defaultperpage', 'block_itn_course_progress'),
-            [5 => 5, 10 => 10, 25 => 25, 50 => 50]);
+            [5 => 5, 10 => 10, 25 => 25, 50 => 50]
+        );
         $mform->setDefault('config_defaultperpage', 10);
     }
 }

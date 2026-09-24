@@ -17,7 +17,8 @@
  * AJAX repository service for Course Progress block.
  *
  * @module     block_itn_course_progress/repository
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

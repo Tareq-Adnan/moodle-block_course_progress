@@ -18,6 +18,22 @@
     @template block_itn_course_progress/batch_summary
 
     Batch-wise comparative performance summary table.
+
+    Example context (json):
+    {
+        "batches": [
+            {
+                "batchname": "Group A",
+                "members": 10,
+                "active": 8,
+                "completed": 4,
+                "completionrate": 40,
+                "progress": 56,
+                "iszero": false,
+                "isfull": false
+            }
+        ]
+    }
 }}
 <div class="itn-batch-summary-container my-3 p-3 bg-light rounded border">
     <div class="d-flex justify-content-between align-items-center mb-3">

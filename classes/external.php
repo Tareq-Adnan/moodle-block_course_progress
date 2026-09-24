@@ -16,8 +16,6 @@
 
 namespace block_itn_course_progress;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
@@ -30,11 +28,11 @@ use context_course;
  * External Web Service API for the Course Progress block.
  *
  * @package    block_itn_course_progress
- * @copyright  2026 ITN-BUET
+ * @copyright  2026 Tarekul Islam
+ * @author     Tarekul Islam, Software Engineer, Brain Station 23
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class external extends external_api {
-
     /**
      * Parameter description for get_courses.
      *
@@ -83,7 +81,7 @@ class external extends external_api {
 
         self::validate_context(context_system::instance());
 
-        return helper::get_courses(
+        $result = helper::get_courses(
             (int)$USER->id,
             $params['search'],
             $params['sort'],
@@ -92,6 +90,12 @@ class external extends external_api {
             $params['perpage'],
             $params['loadprogress']
         );
+
+        foreach ($result['courses'] as $course) {
+            self::validate_context(context_course::instance($course['id']));
+        }
+
+        return $result;
     }
 
     /**
@@ -258,7 +262,12 @@ class external extends external_api {
 
         self::validate_context(context_course::instance($params['sourcecourseid']));
 
-        return helper::get_student_progress($params['studentid'], $params['sourcecourseid']);
+        $result = helper::get_student_progress($params['studentid'], $params['sourcecourseid']);
+        foreach ($result['courses'] as $course) {
+            self::validate_context(context_course::instance($course['id']));
+        }
+
+        return $result;
     }
 
     /**
@@ -360,6 +369,7 @@ class external extends external_api {
         ]);
 
         self::validate_context(context_course::instance($params['sourcecourseid']));
+        self::validate_context(context_course::instance($params['courseid']));
 
         return helper::get_student_activities(
             $params['studentid'],

@@ -18,6 +18,34 @@
     @template block_itn_course_progress/main
 
     Main container for Course & Student Progress block with group filter.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * data-region
+    * data-action
+
+    Context variables required for this template:
+    * uniqueid
+    * defaultload
+    * defaultperpage
+    * enablebatchsummary
+
+    Example context (json):
+    {
+        "uniqueid": "itn_cp_6500abcd",
+        "defaultload": 1,
+        "defaultperpage": 10,
+        "enablebatchsummary": 1,
+        "defaultavatarurl": "https://example.com/avatar.png",
+        "coursecolumnsjson": "[]",
+        "studentcolumnsjson": "[]",
+        "labelsjson": "{}",
+        "perpageoptions": [
+            {"val": 10, "selected": true}
+        ]
+    }
 }}
 <div class="itn-course-progress-widget"
      id="{{uniqueid}}"
@@ -31,7 +59,9 @@
         <!-- Controls Toolbar (No duplicate title - Moodle block header handles title) -->
         <div class="itn-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <div class="itn-toolbar-left d-flex align-items-center gap-2">
-                <label for="{{uniqueid}}-search-courses" class="mb-0 fw-semibold text-secondary small">Search:</label>
+                <label for="{{uniqueid}}-search-courses" class="mb-0 fw-semibold text-secondary small">
+                    {{#str}}searchlabel, block_itn_course_progress{{/str}}
+                </label>
                 <div class="itn-search-wrapper position-relative">
                     <input type="text"
                            id="{{uniqueid}}-search-courses"
@@ -67,13 +97,13 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
-                    <span class="small text-secondary">Show</span>
+                    <span class="small text-secondary">{{#str}}showlabel, block_itn_course_progress{{/str}}</span>
                     <select class="form-select form-select-sm itn-perpage-select" data-action="change-perpage" style="width: auto;">
                         {{#perpageoptions}}
                         <option value="{{val}}" {{#selected}}selected{{/selected}}>{{val}}</option>
                         {{/perpageoptions}}
                     </select>
-                    <span class="small text-secondary">Entries</span>
+                    <span class="small text-secondary">{{#str}}entries, block_itn_course_progress{{/str}}</span>
                 </div>
             </div>
         </div>
@@ -96,7 +126,7 @@
             <table class="table itn-data-table align-middle" data-region="courses-table">
                 <thead>
                     <tr data-region="courses-thead">
-                        <!-- Populated by JavaScript -->
+                        <th scope="col">{{#str}}loadingprogressdata, block_itn_course_progress{{/str}}</th>
                     </tr>
                 </thead>
                 <tbody data-region="courses-tbody">
@@ -121,10 +151,11 @@
         <div class="itn-drilldown-header d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom">
             <div class="d-flex align-items-center gap-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary itn-btn-back" data-action="close-students-view" title="{{#str}}close, block_itn_course_progress{{/str}}">
-                    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i> Back
+                    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>
+                    {{#str}}close, block_itn_course_progress{{/str}}
                 </button>
                 <h5 class="itn-course-subheading mb-0 fw-bold text-primary" data-region="selected-course-title">
-                    <!-- Course Fullname -->
+                    {{#str}}col_courses, block_itn_course_progress{{/str}}
                 </h5>
             </div>
             <div class="itn-view-controls d-flex align-items-center gap-2">
@@ -175,13 +206,13 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
-                    <span class="small text-secondary">Show</span>
+                    <span class="small text-secondary">{{#str}}showlabel, block_itn_course_progress{{/str}}</span>
                     <select class="form-select form-select-sm itn-perpage-select" data-action="change-student-perpage" style="width: auto;">
                         {{#perpageoptions}}
                         <option value="{{val}}" {{#selected}}selected{{/selected}}>{{val}}</option>
                         {{/perpageoptions}}
                     </select>
-                    <span class="small text-secondary">Entries</span>
+                    <span class="small text-secondary">{{#str}}entries, block_itn_course_progress{{/str}}</span>
                 </div>
             </div>
         </div>
@@ -194,7 +225,7 @@
             <table class="table itn-data-table align-middle" data-region="students-table">
                 <thead>
                     <tr data-region="students-thead">
-                        <!-- Populated by JavaScript -->
+                        <th scope="col">{{#str}}loadingprogressdata, block_itn_course_progress{{/str}}</th>
                     </tr>
                 </thead>
                 <tbody data-region="students-tbody">
