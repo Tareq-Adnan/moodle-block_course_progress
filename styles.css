@@ -337,11 +337,12 @@
     border-bottom: 1px solid #cbd5e1;
 }
 
-.itn-course-progress-widget .itn-profile-tabs a,
-.itn-course-progress-widget .itn-profile-tabs span {
+.itn-course-progress-widget .itn-profile-tabs button {
     display: inline-block;
     padding: 0.75rem 0 1rem;
     color: #526170;
+    background: transparent;
+    border: 0;
     font-size: 1rem;
     text-decoration: none;
 }
@@ -349,6 +350,80 @@
 .itn-course-progress-widget .itn-profile-tabs .active {
     color: #0759f8;
     border-bottom: 4px solid #0759f8;
+}
+
+.itn-course-progress-widget .itn-profile-tabs button:focus-visible {
+    outline: 2px solid #0759f8;
+    outline-offset: 3px;
+}
+
+.itn-course-progress-widget .itn-student-details-card {
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+}
+
+.itn-course-progress-widget .itn-student-details-card h3 {
+    margin-bottom: 1.5rem;
+    color: #34424c;
+    font-size: 1.35rem;
+}
+
+.itn-course-progress-widget .itn-student-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 2rem;
+}
+
+.itn-course-progress-widget .itn-student-detail-grid > div {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.itn-course-progress-widget .itn-student-detail-grid dt {
+    margin-bottom: 0.3rem;
+    color: #667085;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.itn-course-progress-widget .itn-student-detail-grid dd {
+    margin: 0;
+    color: #34424c;
+    font-size: 1rem;
+}
+
+.itn-course-progress-widget .itn-engagement-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.itn-course-progress-widget .itn-engagement-summary-grid > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 130px;
+    padding: 1rem;
+    text-align: center;
+    background: #f7f9fc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+}
+
+.itn-course-progress-widget .itn-engagement-summary-grid strong {
+    color: #0759f8;
+    font-size: 2rem;
+    line-height: 1.1;
+}
+
+.itn-course-progress-widget .itn-engagement-summary-grid span {
+    margin-top: 0.55rem;
+    color: #526170;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .itn-course-progress-widget .itn-student-course-card {
@@ -480,6 +555,15 @@
     font-size: 1.1rem;
 }
 
+.itn-course-progress-widget .itn-course-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: 0.45rem;
+    color: #667085;
+    font-size: 0.8rem;
+}
+
 .itn-course-progress-widget .itn-view-course-btn {
     position: absolute;
     right: 0;
@@ -515,6 +599,11 @@
 
     .itn-course-progress-widget .itn-profile-tabs {
         gap: 1.25rem;
+    }
+
+    .itn-course-progress-widget .itn-student-detail-grid,
+    .itn-course-progress-widget .itn-engagement-summary-grid {
+        grid-template-columns: 1fr;
     }
 
     .itn-course-progress-widget .itn-student-course-card {

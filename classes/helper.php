@@ -723,6 +723,15 @@ class helper {
         }
 
         $courses = [];
+        $summary = [
+            'completedcourses' => 0,
+            'inprogresscourses' => 0,
+            'notstartedcourses' => 0,
+            'notrackingcourses' => 0,
+            'completedactivities' => 0,
+            'totalactivities' => 0,
+            'visits' => 0,
+        ];
         $courserenderer = $PAGE->get_renderer('core');
         $enrolledcourses = enrol_get_all_users_courses(
             $studentid,
@@ -816,10 +825,19 @@ class helper {
                 'anonymous' => 0,
             ]);
 
+            $summary[$statuskey . 'courses']++;
+            $summary['completedactivities'] += $completedactivities;
+            $summary['totalactivities'] += $totalactivities;
+            $summary['visits'] += $visits;
+
             $courses[] = [
                 'id' => $courseid,
-                'fullname' => format_string($enrolledcourse->fullname, true, ['context' => $coursecontext]),
-                'category' => $categoryname ? format_string($categoryname) : '-',
+                'fullname' => html_to_text(
+                    format_string($enrolledcourse->fullname, true, ['context' => $coursecontext]),
+                    0,
+                    false
+                ),
+                'category' => $categoryname ? html_to_text(format_string($categoryname), 0, false) : '-',
                 'courseimageurl' => $courseimageurl,
                 'teachers' => $teacherdetails['names'],
                 'teachername' => $teacherdetails['primaryname'],
@@ -864,8 +882,21 @@ class helper {
                 'badges' => $badgecount,
                 'viewerid' => (int)$USER->id,
                 'contactstate' => $contactstate,
+                'firstaccess' => !empty($student->firstaccess) ?
+                    userdate($student->firstaccess, '%d %b, %Y') : '-',
+                'lastlogin' => !empty($student->lastlogin) ?
+                    userdate($student->lastlogin, '%d %b, %Y') : '-',
+                'institution' => !empty($student->institution) ?
+                    html_to_text(format_string($student->institution), 0, false) : '-',
+                'department' => !empty($student->department) ?
+                    html_to_text(format_string($student->department), 0, false) : '-',
+                'city' => !empty($student->city) ?
+                    html_to_text(format_string($student->city), 0, false) : '-',
+                'country' => !empty($student->country) ?
+                    get_string($student->country, 'core_countries') : '-',
             ],
             'totalcourses' => count($courses),
+            'summary' => $summary,
             'courses' => $courses,
         ];
     }

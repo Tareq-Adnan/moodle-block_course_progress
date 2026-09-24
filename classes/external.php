@@ -283,8 +283,23 @@ class external extends external_api {
                 'badges' => new external_value(PARAM_INT, 'Number of issued badges'),
                 'viewerid' => new external_value(PARAM_INT, 'Current report viewer user ID'),
                 'contactstate' => new external_value(PARAM_ALPHA, 'Contact action state'),
+                'firstaccess' => new external_value(PARAM_TEXT, 'First site access date'),
+                'lastlogin' => new external_value(PARAM_TEXT, 'Previous login date'),
+                'institution' => new external_value(PARAM_TEXT, 'Institution'),
+                'department' => new external_value(PARAM_TEXT, 'Department'),
+                'city' => new external_value(PARAM_TEXT, 'City'),
+                'country' => new external_value(PARAM_TEXT, 'Country'),
             ]),
             'totalcourses' => new external_value(PARAM_INT, 'Number of visible enrolled courses'),
+            'summary' => new external_single_structure([
+                'completedcourses' => new external_value(PARAM_INT, 'Completed visible courses'),
+                'inprogresscourses' => new external_value(PARAM_INT, 'Visible courses in progress'),
+                'notstartedcourses' => new external_value(PARAM_INT, 'Visible courses not started'),
+                'notrackingcourses' => new external_value(PARAM_INT, 'Visible courses without completion tracking'),
+                'completedactivities' => new external_value(PARAM_INT, 'Completed tracked activities'),
+                'totalactivities' => new external_value(PARAM_INT, 'Total tracked activities'),
+                'visits' => new external_value(PARAM_INT, 'Course view events across visible courses'),
+            ]),
             'courses' => new external_multiple_structure(
                 new external_single_structure([
                     'id' => new external_value(PARAM_INT, 'Course ID'),

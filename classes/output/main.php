@@ -108,6 +108,7 @@ class main implements renderable, templatable {
             'teachers' => get_string('studentprogress_teachers', 'block_itn_course_progress'),
             'completion' => get_string('studentprogress_completion', 'block_itn_course_progress'),
             'completeddate' => get_string('col_timecompleted', 'block_itn_course_progress'),
+            'lastcourseaccess' => get_string('studentprogress_lastcourseaccess', 'block_itn_course_progress'),
             'visits' => get_string('col_visits', 'block_itn_course_progress'),
             'viewcourse' => get_string('studentprogress_viewcourse', 'block_itn_course_progress'),
             'nocourses' => get_string('studentprogress_nocourses', 'block_itn_course_progress'),

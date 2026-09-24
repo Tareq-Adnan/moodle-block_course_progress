@@ -70,18 +70,59 @@
         </div>
     </article>
 
-    <nav class="itn-profile-tabs mb-4"
+    <nav class="itn-profile-tabs mb-4" role="tablist"
          aria-label="{{#str}}studentprogress_sections, block_itn_course_progress{{/str}}">
-        <a data-region="student-profile-tab" target="_blank" rel="noopener noreferrer"></a>
-        <span class="active" aria-current="page">{{#str}}studentprogress_courses, block_itn_course_progress{{/str}}</span>
-        <a data-region="student-details-tab" target="_blank" rel="noopener noreferrer">
+        <button type="button" data-action="switch-student-tab" data-tab="profile"
+                data-region="student-profile-tab" role="tab" aria-selected="false"></button>
+        <button type="button" class="active" data-action="switch-student-tab" data-tab="courses"
+                role="tab" aria-selected="true">
+            {{#str}}studentprogress_courses, block_itn_course_progress{{/str}}
+        </button>
+        <button type="button" data-action="switch-student-tab" data-tab="details"
+                data-region="student-details-tab" role="tab" aria-selected="false">
             {{#str}}studentprogress_moredetails, block_itn_course_progress{{/str}}
-        </a>
+        </button>
     </nav>
 
-    <div class="text-center text-muted py-5 d-none" data-region="student-progress-loading">
-        <i class="fa fa-spinner fa-spin me-2" aria-hidden="true"></i>
-        {{#str}}studentprogress_loading, block_itn_course_progress{{/str}}
+    <div class="itn-student-tab-panel d-none" data-region="student-progress-panel" data-tab-panel="profile"
+         role="tabpanel">
+        <div class="itn-student-details-card">
+            <h3>{{#str}}studentprogress_profiledetails, block_itn_course_progress{{/str}}</h3>
+            <dl class="itn-student-detail-grid mb-0">
+                <div><dt>{{#str}}col_idnumber, block_itn_course_progress{{/str}}</dt><dd data-region="profile-idnumber"></dd></div>
+                <div><dt>{{#str}}col_email, block_itn_course_progress{{/str}}</dt><dd data-region="profile-email"></dd></div>
+                <div><dt>{{#str}}studentprogress_department, block_itn_course_progress{{/str}}</dt><dd data-region="profile-department"></dd></div>
+                <div><dt>{{#str}}studentprogress_institution, block_itn_course_progress{{/str}}</dt><dd data-region="profile-institution"></dd></div>
+                <div><dt>{{#str}}studentprogress_city, block_itn_course_progress{{/str}}</dt><dd data-region="profile-city"></dd></div>
+                <div><dt>{{#str}}studentprogress_country, block_itn_course_progress{{/str}}</dt><dd data-region="profile-country"></dd></div>
+                <div><dt>{{#str}}studentprogress_firstsiteaccess, block_itn_course_progress{{/str}}</dt><dd data-region="profile-firstaccess"></dd></div>
+                <div><dt>{{#str}}studentprogress_lastlogin, block_itn_course_progress{{/str}}</dt><dd data-region="profile-lastlogin"></dd></div>
+            </dl>
+        </div>
     </div>
-    <div class="itn-student-course-list" data-region="student-progress-courses"></div>
+
+    <div class="itn-student-tab-panel" data-region="student-progress-panel" data-tab-panel="courses"
+         role="tabpanel">
+        <div class="text-center text-muted py-5 d-none" data-region="student-progress-loading">
+            <i class="fa fa-spinner fa-spin me-2" aria-hidden="true"></i>
+            {{#str}}studentprogress_loading, block_itn_course_progress{{/str}}
+        </div>
+        <div class="itn-student-course-list" data-region="student-progress-courses"></div>
+    </div>
+
+    <div class="itn-student-tab-panel d-none" data-region="student-progress-panel" data-tab-panel="details"
+         role="tabpanel">
+        <div class="itn-student-details-card">
+            <h3>{{#str}}studentprogress_engagementsummary, block_itn_course_progress{{/str}}</h3>
+            <div class="itn-engagement-summary-grid">
+                <div><strong data-region="summary-totalcourses">0</strong><span>{{#str}}studentprogress_enrolledcourses, block_itn_course_progress{{/str}}</span></div>
+                <div><strong data-region="summary-completedcourses">0</strong><span>{{#str}}studentprogress_completedcourses, block_itn_course_progress{{/str}}</span></div>
+                <div><strong data-region="summary-inprogresscourses">0</strong><span>{{#str}}studentprogress_inprogresscourses, block_itn_course_progress{{/str}}</span></div>
+                <div><strong data-region="summary-notstartedcourses">0</strong><span>{{#str}}studentprogress_notstartedcourses, block_itn_course_progress{{/str}}</span></div>
+                <div><strong data-region="summary-notrackingcourses">0</strong><span>{{#str}}studentprogress_notrackingcourses, block_itn_course_progress{{/str}}</span></div>
+                <div><strong data-region="summary-activities">0</strong><span>{{#str}}studentprogress_completedactivities, block_itn_course_progress{{/str}}</span></div>
+                <div><strong data-region="summary-visits">0</strong><span>{{#str}}studentprogress_coursevisits, block_itn_course_progress{{/str}}</span></div>
+            </div>
+        </div>
+    </div>
 </section>

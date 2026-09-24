@@ -113,6 +113,22 @@ $string['studentprogress_sections'] = 'Student profile sections';
 $string['studentprogress_courses'] = 'Courses';
 $string['studentprogress_moredetails'] = 'More Details';
 $string['studentprogress_coursecompleted'] = 'Course Completed';
+$string['studentprogress_profiledetails'] = 'Profile details';
+$string['studentprogress_department'] = 'Department';
+$string['studentprogress_institution'] = 'Institution';
+$string['studentprogress_city'] = 'City';
+$string['studentprogress_country'] = 'Country';
+$string['studentprogress_firstsiteaccess'] = 'First site access';
+$string['studentprogress_lastlogin'] = 'Last login';
+$string['studentprogress_engagementsummary'] = 'Engagement summary';
+$string['studentprogress_enrolledcourses'] = 'Enrolled courses';
+$string['studentprogress_completedcourses'] = 'Completed courses';
+$string['studentprogress_inprogresscourses'] = 'Courses in progress';
+$string['studentprogress_notstartedcourses'] = 'Courses not started';
+$string['studentprogress_notrackingcourses'] = 'Courses without tracking';
+$string['studentprogress_completedactivities'] = 'Activities completed';
+$string['studentprogress_coursevisits'] = 'Course visits';
+$string['studentprogress_lastcourseaccess'] = 'Last access';
 
 // Batch Table Columns.
 $string['col_batchname'] = 'Batch Name';

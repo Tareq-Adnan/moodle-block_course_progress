@@ -159,6 +159,23 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             studentStatDiscussions: this.root.querySelector('[data-region="student-stat-discussions"]'),
             studentStatBlogEntries: this.root.querySelector('[data-region="student-stat-blogentries"]'),
             studentStatBadges: this.root.querySelector('[data-region="student-stat-badges"]'),
+            studentTabs: this.root.querySelectorAll('[data-action="switch-student-tab"]'),
+            studentTabPanels: this.root.querySelectorAll('[data-region="student-progress-panel"]'),
+            profileIdNumber: this.root.querySelector('[data-region="profile-idnumber"]'),
+            profileEmail: this.root.querySelector('[data-region="profile-email"]'),
+            profileDepartment: this.root.querySelector('[data-region="profile-department"]'),
+            profileInstitution: this.root.querySelector('[data-region="profile-institution"]'),
+            profileCity: this.root.querySelector('[data-region="profile-city"]'),
+            profileCountry: this.root.querySelector('[data-region="profile-country"]'),
+            profileFirstAccess: this.root.querySelector('[data-region="profile-firstaccess"]'),
+            profileLastLogin: this.root.querySelector('[data-region="profile-lastlogin"]'),
+            summaryTotalCourses: this.root.querySelector('[data-region="summary-totalcourses"]'),
+            summaryCompletedCourses: this.root.querySelector('[data-region="summary-completedcourses"]'),
+            summaryInProgressCourses: this.root.querySelector('[data-region="summary-inprogresscourses"]'),
+            summaryNotStartedCourses: this.root.querySelector('[data-region="summary-notstartedcourses"]'),
+            summaryNoTrackingCourses: this.root.querySelector('[data-region="summary-notrackingcourses"]'),
+            summaryActivities: this.root.querySelector('[data-region="summary-activities"]'),
+            summaryVisits: this.root.querySelector('[data-region="summary-visits"]'),
 
             // Column Picker.
             columnPickerMenu: this.root.querySelector('[data-region="column-picker-menu"]'),
@@ -259,6 +276,10 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         if (this.dom.studentContactButton) {
             this.dom.studentContactButton.addEventListener('click', () => this.addStudentContact());
         }
+
+        this.dom.studentTabs.forEach((tab) => {
+            tab.addEventListener('click', () => this.switchStudentTab(tab.dataset.tab));
+        });
 
         // 9. Fullscreen / Expand Toggle ([+] Button).
         var fullscreenBtn = this.root.querySelector('[data-action="toggle-fullscreen"]');
@@ -776,6 +797,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         this.dom.viewCourses.classList.add('d-none');
         this.dom.viewStudents.classList.add('d-none');
         this.dom.viewStudentProgress.classList.remove('d-none');
+        this.switchStudentTab('courses');
         this.loadStudentProgress();
     };
 
@@ -816,13 +838,26 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         this.dom.studentProgressName.textContent = student.name;
         this.dom.studentProgressLastAccess.textContent = student.lastaccess;
         this.dom.studentProgressMessage.href = student.messageurl;
-        this.dom.studentProfileTab.href = student.profileurl;
         this.dom.studentProfileTab.textContent = student.name;
-        this.dom.studentDetailsTab.href = student.profileurl;
         this.dom.studentStatContacts.textContent = student.contacts;
         this.dom.studentStatDiscussions.textContent = student.discussions;
         this.dom.studentStatBlogEntries.textContent = student.blogentries;
         this.dom.studentStatBadges.textContent = student.badges;
+        this.dom.profileIdNumber.textContent = student.idnumber;
+        this.dom.profileEmail.textContent = student.email;
+        this.dom.profileDepartment.textContent = student.department;
+        this.dom.profileInstitution.textContent = student.institution;
+        this.dom.profileCity.textContent = student.city;
+        this.dom.profileCountry.textContent = student.country;
+        this.dom.profileFirstAccess.textContent = student.firstaccess;
+        this.dom.profileLastLogin.textContent = student.lastlogin;
+        this.dom.summaryTotalCourses.textContent = data.totalcourses;
+        this.dom.summaryCompletedCourses.textContent = data.summary.completedcourses;
+        this.dom.summaryInProgressCourses.textContent = data.summary.inprogresscourses;
+        this.dom.summaryNotStartedCourses.textContent = data.summary.notstartedcourses;
+        this.dom.summaryNoTrackingCourses.textContent = data.summary.notrackingcourses;
+        this.dom.summaryActivities.textContent = `${data.summary.completedactivities} / ${data.summary.totalactivities}`;
+        this.dom.summaryVisits.textContent = data.summary.visits;
         this.renderContactAction(student);
         this.dom.studentProgressCourses.innerHTML = '';
 
@@ -904,6 +939,19 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             completion.appendChild(progressTrack);
             completion.appendChild(completionLabel);
 
+            const courseMeta = document.createElement('div');
+            courseMeta.className = 'itn-course-meta';
+            if (course.lastaccess !== '-') {
+                const lastAccess = document.createElement('span');
+                lastAccess.textContent = `${labels.lastcourseaccess || 'Last access'}: ${course.lastaccess}`;
+                courseMeta.appendChild(lastAccess);
+            }
+            if (course.timecompleted !== '-') {
+                const completed = document.createElement('span');
+                completed.textContent = `${labels.completeddate || 'Completed'}: ${course.timecompleted}`;
+                courseMeta.appendChild(completed);
+            }
+
             const courseLink = document.createElement('a');
             courseLink.className = 'btn btn-outline-primary itn-view-course-btn';
             courseLink.href = course.courseurl;
@@ -915,11 +963,28 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             content.appendChild(title);
             content.appendChild(teacher);
             content.appendChild(completion);
+            content.appendChild(courseMeta);
             content.appendChild(courseLink);
             layout.appendChild(imageColumn);
             layout.appendChild(content);
             card.appendChild(layout);
             this.dom.studentProgressCourses.appendChild(card);
+        });
+    };
+
+    /**
+     * Switch between student profile, courses, and engagement detail panels.
+     *
+     * @param {String} tabName Tab identifier.
+     */
+    CourseProgress.prototype.switchStudentTab = function(tabName) {
+        this.dom.studentTabs.forEach((tab) => {
+            const active = tab.dataset.tab === tabName;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        this.dom.studentTabPanels.forEach((panel) => {
+            panel.classList.toggle('d-none', panel.dataset.tabPanel !== tabName);
         });
     };
 
