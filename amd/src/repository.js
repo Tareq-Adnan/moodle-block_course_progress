@@ -87,6 +87,26 @@ define(['core/ajax'], function(Ajax) {
         },
 
         /**
+         * Fetch one student's tracked activity details for a course.
+         *
+         * @param {Number} studentid Student user ID.
+         * @param {Number} courseid Course containing the activities.
+         * @param {Number} sourcecourseid Course from which the student was selected.
+         * @return {Promise}
+         */
+        getStudentActivities: function(studentid, courseid, sourcecourseid) {
+            const request = {
+                methodname: 'block_itn_course_progress_get_student_activities',
+                args: {
+                    studentid: studentid,
+                    courseid: courseid,
+                    sourcecourseid: sourcecourseid
+                }
+            };
+            return Ajax.call([request])[0];
+        },
+
+        /**
          * Send a Moodle contact request to the selected student.
          *
          * @param {Number} userid Current report viewer user ID.

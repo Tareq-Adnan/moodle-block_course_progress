@@ -328,6 +328,82 @@ class external extends external_api {
     }
 
     /**
+     * Parameter description for get_student_activities.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_student_activities_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'studentid' => new external_value(PARAM_INT, 'Student user ID'),
+            'courseid' => new external_value(PARAM_INT, 'Course containing the activities'),
+            'sourcecourseid' => new external_value(PARAM_INT, 'Course from which the student was selected'),
+        ]);
+    }
+
+    /**
+     * Get one learner's tracked activity completion and engagement in a course.
+     *
+     * @param int $studentid Student user ID.
+     * @param int $courseid Course containing the activities.
+     * @param int $sourcecourseid Course from which the student was selected.
+     * @return array
+     */
+    public static function get_student_activities(
+        int $studentid,
+        int $courseid,
+        int $sourcecourseid
+    ): array {
+        $params = self::validate_parameters(self::get_student_activities_parameters(), [
+            'studentid' => $studentid,
+            'courseid' => $courseid,
+            'sourcecourseid' => $sourcecourseid,
+        ]);
+
+        self::validate_context(context_course::instance($params['sourcecourseid']));
+
+        return helper::get_student_activities(
+            $params['studentid'],
+            $params['courseid'],
+            $params['sourcecourseid']
+        );
+    }
+
+    /**
+     * Return structure for get_student_activities.
+     *
+     * @return external_single_structure
+     */
+    public static function get_student_activities_returns(): external_single_structure {
+        return new external_single_structure([
+            'course' => new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Course ID'),
+                'fullname' => new external_value(PARAM_TEXT, 'Course full name'),
+            ]),
+            'totalactivities' => new external_value(PARAM_INT, 'Number of tracked activities'),
+            'activities' => new external_multiple_structure(
+                new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Course module ID'),
+                    'name' => new external_value(PARAM_TEXT, 'Activity name'),
+                    'modname' => new external_value(PARAM_ALPHANUMEXT, 'Activity module name'),
+                    'typename' => new external_value(PARAM_TEXT, 'Localized activity type'),
+                    'iconurl' => new external_value(PARAM_URL, 'Activity icon URL'),
+                    'purpose' => new external_value(PARAM_ALPHA, 'Moodle activity purpose'),
+                    'isbranded' => new external_value(PARAM_BOOL, 'Whether the activity uses its brand colour'),
+                    'filtericon' => new external_value(PARAM_BOOL, 'Whether Moodle should colourize the icon'),
+                    'status' => new external_value(PARAM_TEXT, 'Completion status'),
+                    'statuskey' => new external_value(PARAM_ALPHA, 'Machine-readable completion status'),
+                    'completiondate' => new external_value(PARAM_TEXT, 'Completion date'),
+                    'isgraded' => new external_value(PARAM_BOOL, 'Whether the activity is graded'),
+                    'grade' => new external_value(PARAM_TEXT, 'Formatted user grade'),
+                    'lastinteraction' => new external_value(PARAM_TEXT, 'Last logged interaction'),
+                    'interactions' => new external_value(PARAM_INT, 'Logged interaction count'),
+                    'activityurl' => new external_value(PARAM_URL, 'Activity URL', VALUE_DEFAULT, ''),
+                ])
+            ),
+        ]);
+    }
+
+    /**
      * Parameter description for get_groups.
      *
      * @return external_function_parameters

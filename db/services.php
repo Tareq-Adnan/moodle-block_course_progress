@@ -46,6 +46,13 @@ $functions = [
         'type' => 'read',
         'ajax' => true,
     ],
+    'block_itn_course_progress_get_student_activities' => [
+        'classname' => 'block_itn_course_progress\external',
+        'methodname' => 'get_student_activities',
+        'description' => 'Retrieve one student completion and engagement details for tracked course activities.',
+        'type' => 'read',
+        'ajax' => true,
+    ],
     'block_itn_course_progress_get_groups' => [
         'classname' => 'block_itn_course_progress\external',
         'methodname' => 'get_groups',

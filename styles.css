@@ -332,29 +332,89 @@
 }
 
 .itn-course-progress-widget .itn-profile-tabs {
+    position: relative;
     display: flex;
     gap: 2.5rem;
     border-bottom: 1px solid #cbd5e1;
 }
 
-.itn-course-progress-widget .itn-profile-tabs button {
+.itn-course-progress-widget .itn-profile-tabs button,
+.itn-course-progress-widget .itn-profile-tabs a {
+    position: relative;
     display: inline-block;
     padding: 0.75rem 0 1rem;
     color: #526170;
     background: transparent;
     border: 0;
     font-size: 1rem;
+    font-weight: 500;
     text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s ease;
 }
 
-.itn-course-progress-widget .itn-profile-tabs .active {
+.itn-course-progress-widget .itn-profile-tabs button:hover,
+.itn-course-progress-widget .itn-profile-tabs a:hover {
     color: #0759f8;
-    border-bottom: 4px solid #0759f8;
 }
 
-.itn-course-progress-widget .itn-profile-tabs button:focus-visible {
+.itn-course-progress-widget .itn-profile-tabs button.active {
+    color: #0759f8;
+    font-weight: 600;
+}
+
+.itn-course-progress-widget .itn-profile-tabs button:focus-visible,
+.itn-course-progress-widget .itn-profile-tabs a:focus-visible {
     outline: 2px solid #0759f8;
     outline-offset: 3px;
+}
+
+/* Sliding active tab underline indicator */
+.itn-course-progress-widget .itn-tab-indicator {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 4px;
+    background-color: #0759f8;
+    border-radius: 4px 4px 0 0;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateZ(0);
+    will-change: left, width;
+    transition: left 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.2s ease;
+}
+
+.itn-course-progress-widget .itn-tab-indicator.is-visible {
+    opacity: 1;
+}
+
+/* Smooth Tab Panel Transition */
+.itn-course-progress-widget .itn-student-tab-panel:not(.d-none) {
+    animation: itnTabFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes itnTabFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .itn-course-progress-widget .itn-tab-indicator {
+        transition: none !important;
+    }
+    .itn-course-progress-widget .itn-student-tab-panel:not(.d-none) {
+        animation: none !important;
+    }
 }
 
 .itn-course-progress-widget .itn-student-details-card {
@@ -564,13 +624,203 @@
     font-size: 0.8rem;
 }
 
-.itn-course-progress-widget .itn-view-course-btn {
+.itn-course-progress-widget .itn-course-actions {
     position: absolute;
     right: 0;
     bottom: 0;
+    display: flex;
+    gap: 0.65rem;
+}
+
+.itn-course-progress-widget .itn-view-course-btn,
+.itn-course-progress-widget .itn-activity-details-btn {
     padding: 0.55rem 1.2rem;
     border-width: 2px;
     font-weight: 600;
+}
+
+.itn-course-progress-widget .itn-activity-panel {
+    overflow: hidden;
+    color: #526170;
+    transition: height 300ms ease, opacity 220ms ease;
+}
+
+.itn-course-progress-widget .itn-activity-panel-inner {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    background: #f7f9fc;
+    border: 1px solid #e5ebf2;
+    border-radius: 0.75rem;
+}
+
+.itn-course-progress-widget .itn-activity-panel-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 0.65rem;
+}
+
+.itn-course-progress-widget .itn-activity-panel-header h5 {
+    margin: 0;
+    color: #34424c;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.itn-course-progress-widget .itn-activity-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.45rem;
+    color: #075fc7;
+    background: #e8f1ff;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.itn-course-progress-widget .itn-activity-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.itn-course-progress-widget .itn-activity-item {
+    display: grid;
+    grid-template-columns: 2fr auto 3fr auto;
+    align-items: center;
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid #e5ebf2;
+    border-radius: 0.65rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    gap: 1rem;
+}
+
+.itn-course-progress-widget .itn-activity-name {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.7rem;
+}
+
+.itn-course-progress-widget .itn-activity-icon.activityiconcontainer {
+    display: inline-flex;
+    flex: 0 0 2.75rem;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: 0;
+    border-radius: 0.55rem;
+}
+
+.itn-course-progress-widget .itn-activity-icon.activityiconcontainer.other {
+    background-color: #edf1f5;
+}
+
+.itn-course-progress-widget .itn-activity-icon .activityicon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0;
+    object-fit: contain;
+}
+
+.itn-course-progress-widget .itn-activity-name > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.itn-course-progress-widget .itn-activity-name a,
+.itn-course-progress-widget .itn-activity-name > span > span {
+    color: #34424c;
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.itn-course-progress-widget .itn-activity-name small {
+    margin-top: 0.15rem;
+    color: #7a8794;
+}
+
+.itn-course-progress-widget .itn-activity-status {
+    display: inline-block;
+    padding: 0.3rem 0.55rem;
+    color: #475569;
+    background: #e2e8f0;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.itn-course-progress-widget .itn-activity-status-completed,
+.itn-course-progress-widget .itn-activity-status-passed {
+    color: #06603d;
+    background: #d9f7e8;
+}
+
+.itn-course-progress-widget .itn-activity-status-failed {
+    color: #9f1239;
+    background: #ffe4e6;
+}
+
+.itn-course-progress-widget .itn-activity-status-incomplete {
+    color: #075985;
+    background: #e0f2fe;
+}
+
+.itn-course-progress-widget .itn-activity-status-notstarted {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.itn-course-progress-widget .itn-activity-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 0;
+    gap: 0.75rem;
+}
+
+.itn-course-progress-widget .itn-activity-meta div {
+    min-width: 0;
+}
+
+.itn-course-progress-widget .itn-activity-meta dt {
+    margin-bottom: 0.2rem;
+    color: #84909c;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.itn-course-progress-widget .itn-activity-meta dd {
+    margin: 0;
+    color: #526170;
+    font-size: 0.8rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.itn-course-progress-widget .itn-activity-action .btn {
+    white-space: nowrap;
+}
+
+.itn-course-progress-widget .itn-activity-empty {
+    padding: 1.5rem;
+    color: #667085;
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .itn-course-progress-widget .itn-activity-panel {
+        transition: none;
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -625,10 +875,33 @@
         width: 100%;
     }
 
-    .itn-course-progress-widget .itn-view-course-btn {
+    .itn-course-progress-widget .itn-course-actions {
         position: static;
         align-self: flex-end;
+        flex-wrap: wrap;
         margin-top: 1.25rem;
+    }
+
+    .itn-course-progress-widget .itn-activity-panel-inner {
+        padding: 0.75rem;
+    }
+
+    .itn-course-progress-widget .itn-activity-item {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .itn-course-progress-widget .itn-activity-meta {
+        grid-template-columns: repeat(2, 1fr);
+        width: 100%;
+    }
+
+    .itn-course-progress-widget .itn-activity-action {
+        width: 100%;
+    }
+
+    .itn-course-progress-widget .itn-activity-action .btn {
+        width: 100%;
     }
 }
 

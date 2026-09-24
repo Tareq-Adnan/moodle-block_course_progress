@@ -129,6 +129,18 @@ $string['studentprogress_notrackingcourses'] = 'Courses without tracking';
 $string['studentprogress_completedactivities'] = 'Activities completed';
 $string['studentprogress_coursevisits'] = 'Course visits';
 $string['studentprogress_lastcourseaccess'] = 'Last access';
+$string['studentprogress_activitydetails'] = 'Activity details';
+$string['studentprogress_hideactivities'] = 'Hide activities';
+$string['studentprogress_loadingactivities'] = 'Loading activities...';
+$string['studentprogress_noactivities'] = 'No completion-tracked activities are configured in this course.';
+$string['studentprogress_trackedactivities'] = 'Tracked activities';
+$string['studentprogress_activity'] = 'Activity';
+$string['studentprogress_lastinteraction'] = 'Last interaction';
+$string['studentprogress_interactions'] = 'Interactions';
+$string['studentprogress_openactivity'] = 'Open activity';
+$string['studentprogress_activity_passed'] = 'Passed';
+$string['studentprogress_activity_failed'] = 'Failed';
+$string['studentprogress_activity_incomplete'] = 'Incomplete';
 
 // Batch Table Columns.
 $string['col_batchname'] = 'Batch Name';

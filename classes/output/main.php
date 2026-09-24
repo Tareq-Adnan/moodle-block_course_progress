@@ -118,6 +118,17 @@ class main implements renderable, templatable {
             'alreadycontact' => get_string('studentprogress_alreadycontact', 'block_itn_course_progress'),
             'contactsucceeded' => get_string('studentprogress_contactsucceeded', 'block_itn_course_progress'),
             'coursecompleted' => get_string('studentprogress_coursecompleted', 'block_itn_course_progress'),
+            'activitydetails' => get_string('studentprogress_activitydetails', 'block_itn_course_progress'),
+            'hideactivities' => get_string('studentprogress_hideactivities', 'block_itn_course_progress'),
+            'loadingactivities' => get_string('studentprogress_loadingactivities', 'block_itn_course_progress'),
+            'noactivities' => get_string('studentprogress_noactivities', 'block_itn_course_progress'),
+            'trackedactivities' => get_string('studentprogress_trackedactivities', 'block_itn_course_progress'),
+            'activity' => get_string('studentprogress_activity', 'block_itn_course_progress'),
+            'status' => get_string('col_status', 'block_itn_course_progress'),
+            'grade' => get_string('col_grade', 'block_itn_course_progress'),
+            'lastinteraction' => get_string('studentprogress_lastinteraction', 'block_itn_course_progress'),
+            'interactions' => get_string('studentprogress_interactions', 'block_itn_course_progress'),
+            'openactivity' => get_string('studentprogress_openactivity', 'block_itn_course_progress'),
         ];
 
         return [

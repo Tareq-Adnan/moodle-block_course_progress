@@ -286,7 +286,7 @@ class helper {
             [$catinsql, $catinparams] = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED, 'cat');
             $catrecords = $DB->get_records_sql("SELECT id, name FROM {course_categories} WHERE id $catinsql", $catinparams);
             foreach ($catrecords as $cat) {
-                $categorynames[(int)$cat->id] = format_string($cat->name);
+                $categorynames[(int)$cat->id] = html_entity_decode(format_string($cat->name), ENT_QUOTES, 'UTF-8');
             }
         }
 
@@ -380,12 +380,12 @@ class helper {
             $courses[] = [
                 'index' => $index++,
                 'id' => $courseid,
-                'coursename' => format_string($course->fullname),
-                'shortname' => format_string($course->shortname),
+                'coursename' => html_entity_decode(format_string($course->fullname, true, ['context' => $coursecontext]), ENT_QUOTES, 'UTF-8'),
+                'shortname' => html_entity_decode(format_string($course->shortname, true, ['context' => $coursecontext]), ENT_QUOTES, 'UTF-8'),
                 'startdate' => $course->startdate > 0 ? userdate($course->startdate, '%d %b, %Y') : '-',
                 'startdate_raw' => (int)$course->startdate,
                 'enddate' => $course->enddate > 0 ? userdate($course->enddate, '%d %b, %Y') : '-',
-                'category' => $categorynames[(int)$course->category] ?? '',
+                'category' => html_entity_decode($categorynames[(int)$course->category] ?? '', ENT_QUOTES, 'UTF-8'),
                 'enrolled' => $enrolled,
                 'active' => $active,
                 'completed' => $completed,
@@ -528,7 +528,7 @@ class helper {
                 'to' => 0,
                 'course' => [
                     'id' => $course->id,
-                    'fullname' => format_string($course->fullname),
+                    'fullname' => html_entity_decode(format_string($course->fullname, true, ['context' => $coursecontext]), ENT_QUOTES, 'UTF-8'),
                 ],
             ];
         }
@@ -596,7 +596,7 @@ class helper {
                          AND gm.userid $userinsql";
             $ugrecords = $DB->get_records_sql($ugsql, $usergroupparams);
             foreach ($ugrecords as $ug) {
-                $usergroups[(int)$ug->userid][] = format_string($ug->groupname);
+                $usergroups[(int)$ug->userid][] = html_entity_decode(format_string($ug->groupname), ENT_QUOTES, 'UTF-8');
             }
         }
 
@@ -662,7 +662,7 @@ class helper {
             'to' => $to,
             'course' => [
                 'id' => $course->id,
-                'fullname' => format_string($course->fullname),
+                'fullname' => html_entity_decode(format_string($course->fullname, true, ['context' => context_course::instance($courseid)]), ENT_QUOTES, 'UTF-8'),
             ],
         ];
     }
@@ -832,12 +832,12 @@ class helper {
 
             $courses[] = [
                 'id' => $courseid,
-                'fullname' => html_to_text(
+                'fullname' => html_entity_decode(
                     format_string($enrolledcourse->fullname, true, ['context' => $coursecontext]),
-                    0,
-                    false
+                    ENT_QUOTES,
+                    'UTF-8'
                 ),
-                'category' => $categoryname ? html_to_text(format_string($categoryname), 0, false) : '-',
+                'category' => $categoryname ? html_entity_decode(format_string($categoryname), ENT_QUOTES, 'UTF-8') : '-',
                 'courseimageurl' => $courseimageurl,
                 'teachers' => $teacherdetails['names'],
                 'teachername' => $teacherdetails['primaryname'],
@@ -898,6 +898,182 @@ class helper {
             'totalcourses' => count($courses),
             'summary' => $summary,
             'courses' => $courses,
+        ];
+    }
+
+    /**
+     * Get completion and engagement details for a student's tracked course activities.
+     *
+     * @param int $studentid Student user ID.
+     * @param int $courseid Course containing the activities.
+     * @param int $sourcecourseid Course from which the student was selected.
+     * @return array Course and activity detail records.
+     */
+    public static function get_student_activities(
+        int $studentid,
+        int $courseid,
+        int $sourcecourseid
+    ): array {
+        global $CFG, $DB;
+
+        $sourcecontext = context_course::instance($sourcecourseid);
+        if (!self::can_view_course($sourcecourseid)) {
+            throw new \required_capability_exception(
+                $sourcecontext,
+                'block/itn_course_progress:view',
+                'nopermissions',
+                ''
+            );
+        }
+
+        $student = $DB->get_record('user', ['id' => $studentid, 'deleted' => 0], 'id, suspended', MUST_EXIST);
+        if (!empty($student->suspended) ||
+                !is_enrolled($sourcecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+            throw new \invalid_parameter_exception('The selected user is not an active learner in the source course.');
+        }
+
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        $coursecontext = context_course::instance($courseid);
+        if (!self::can_view_course($courseid)) {
+            throw new \required_capability_exception(
+                $coursecontext,
+                'block/itn_course_progress:view',
+                'nopermissions',
+                ''
+            );
+        }
+        if (!is_enrolled($coursecontext, $studentid, self::TRACKED_USER_CAPABILITY, true)) {
+            throw new \invalid_parameter_exception('The selected user is not an active learner in the target course.');
+        }
+
+        require_once($CFG->libdir . '/completionlib.php');
+        require_once($CFG->libdir . '/gradelib.php');
+
+        $graderecords = $DB->get_records_sql(
+            "SELECT gi.*, gg.finalgrade AS userfinalgrade
+               FROM {grade_items} gi
+          LEFT JOIN {grade_grades} gg
+                 ON gg.itemid = gi.id AND gg.userid = :gradeuserid
+              WHERE gi.courseid = :gradecourseid
+                AND gi.itemtype = :itemtype",
+            [
+                'gradeuserid' => $studentid,
+                'gradecourseid' => $courseid,
+                'itemtype' => 'mod',
+            ]
+        );
+        $grades = [];
+        foreach ($graderecords as $graderecord) {
+            $grades[$graderecord->itemmodule . ':' . $graderecord->iteminstance] = $graderecord;
+        }
+
+        $interactionrecords = $DB->get_records_sql(
+            "SELECT contextinstanceid,
+                    MAX(timecreated) AS lastinteraction,
+                    COUNT(id) AS interactions
+               FROM {logstore_standard_log}
+              WHERE userid = :loguserid
+                AND courseid = :logcourseid
+                AND contextlevel = :modulecontext
+                AND anonymous = 0
+           GROUP BY contextinstanceid",
+            [
+                'loguserid' => $studentid,
+                'logcourseid' => $courseid,
+                'modulecontext' => CONTEXT_MODULE,
+            ]
+        );
+
+        $completioninfo = new \completion_info($course);
+        $modinfo = get_fast_modinfo($course, $studentid);
+        $activities = [];
+        foreach ($modinfo->get_sections() as $cmids) {
+            foreach ($cmids as $cmid) {
+                $cm = $modinfo->get_cm($cmid);
+                if ((int)$cm->completion === COMPLETION_TRACKING_NONE) {
+                    continue;
+                }
+
+                $completiondata = $completioninfo->get_data($cm, false, $studentid);
+                $interaction = $interactionrecords[$cmid] ?? null;
+                $interactioncount = !empty($interaction->interactions) ? (int)$interaction->interactions : 0;
+                $completionstate = (int)$completiondata->completionstate;
+
+                if ($completionstate === COMPLETION_COMPLETE_PASS) {
+                    $statuskey = 'passed';
+                    $status = get_string('studentprogress_activity_passed', 'block_itn_course_progress');
+                } else if ($completionstate === COMPLETION_COMPLETE_FAIL) {
+                    $statuskey = 'failed';
+                    $status = get_string('studentprogress_activity_failed', 'block_itn_course_progress');
+                } else if ($completionstate === COMPLETION_COMPLETE) {
+                    $statuskey = 'completed';
+                    $status = get_string('studentprogress_status_completed', 'block_itn_course_progress');
+                } else if ($interactioncount > 0) {
+                    $statuskey = 'incomplete';
+                    $status = get_string('studentprogress_activity_incomplete', 'block_itn_course_progress');
+                } else {
+                    $statuskey = 'notstarted';
+                    $status = get_string('studentprogress_status_notstarted', 'block_itn_course_progress');
+                }
+
+                $gradekey = $cm->modname . ':' . $cm->instance;
+                $graderecord = $grades[$gradekey] ?? null;
+                $isgraded = $graderecord !== null && (int)$graderecord->gradetype !== GRADE_TYPE_NONE;
+                $grade = '-';
+                if ($isgraded && $graderecord->userfinalgrade !== null) {
+                    $gradeitem = new \grade_item($graderecord, false);
+                    $grade = grade_format_gradevalue((float)$graderecord->userfinalgrade, $gradeitem);
+                }
+
+                $iconurl = $cm->get_icon_url();
+                $purpose = plugin_supports(
+                    'mod',
+                    $cm->modname,
+                    FEATURE_MOD_PURPOSE,
+                    MOD_PURPOSE_OTHER
+                );
+                try {
+                    $isbranded = component_callback('mod_' . $cm->modname, 'is_branded', [], false);
+                } catch (\coding_exception $exception) {
+                    debugging($exception->getMessage(), DEBUG_DEVELOPER);
+                    $isbranded = false;
+                }
+
+                $activities[] = [
+                    'id' => (int)$cm->id,
+                    'name' => html_entity_decode(format_string($cm->name, true, ['context' => $cm->context]), ENT_QUOTES, 'UTF-8'),
+                    'modname' => $cm->modname,
+                    'typename' => get_string('modulename', 'mod_' . $cm->modname),
+                    'iconurl' => $iconurl->out(false),
+                    'purpose' => $purpose,
+                    'isbranded' => $isbranded,
+                    'filtericon' => (bool)$iconurl->get_param('filtericon'),
+                    'status' => $status,
+                    'statuskey' => $statuskey,
+                    'completiondate' => $completionstate > COMPLETION_INCOMPLETE &&
+                            !empty($completiondata->timemodified) ?
+                        userdate($completiondata->timemodified, '%d %b, %Y') : '-',
+                    'isgraded' => $isgraded,
+                    'grade' => $grade,
+                    'lastinteraction' => !empty($interaction->lastinteraction) ?
+                        userdate($interaction->lastinteraction, '%d %b, %Y') : '-',
+                    'interactions' => $interactioncount,
+                    'activityurl' => $cm->url ? $cm->url->out(false) : '',
+                ];
+            }
+        }
+
+        return [
+            'course' => [
+                'id' => $courseid,
+                'fullname' => html_entity_decode(
+                    format_string($course->fullname, true, ['context' => $coursecontext]),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ),
+            ],
+            'totalactivities' => count($activities),
+            'activities' => $activities,
         ];
     }
 
@@ -983,7 +1159,7 @@ class helper {
         foreach ($groups as $g) {
             $result[] = [
                 'id' => (int)$g->id,
-                'name' => format_string($g->name),
+                'name' => html_entity_decode(format_string($g->name), ENT_QUOTES, 'UTF-8'),
             ];
         }
 
@@ -1074,7 +1250,7 @@ class helper {
 
             $summary[] = [
                 'groupid' => $groupid,
-                'batchname' => format_string($g->name),
+                'batchname' => html_entity_decode(format_string($g->name), ENT_QUOTES, 'UTF-8'),
                 'members' => $members,
                 'active' => $active,
                 'completed' => $completed,

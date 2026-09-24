@@ -152,6 +152,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             studentProgressLoading: this.root.querySelector('[data-region="student-progress-loading"]'),
             studentProgressCourses: this.root.querySelector('[data-region="student-progress-courses"]'),
             studentProfileTab: this.root.querySelector('[data-region="student-profile-tab"]'),
+            studentProfileLink: this.root.querySelector('[data-region="student-profile-link"]'),
             studentDetailsTab: this.root.querySelector('[data-region="student-details-tab"]'),
             studentContactButton: this.root.querySelector('[data-action="add-student-contact"]'),
             studentContactLabel: this.root.querySelector('[data-region="student-contact-label"]'),
@@ -161,6 +162,8 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             studentStatBadges: this.root.querySelector('[data-region="student-stat-badges"]'),
             studentTabs: this.root.querySelectorAll('[data-action="switch-student-tab"]'),
             studentTabPanels: this.root.querySelectorAll('[data-region="student-progress-panel"]'),
+            tabIndicator: this.root.querySelector('[data-region="tab-indicator"]'),
+            profileTabsNav: this.root.querySelector('.itn-profile-tabs'),
             profileIdNumber: this.root.querySelector('[data-region="profile-idnumber"]'),
             profileEmail: this.root.querySelector('[data-region="profile-email"]'),
             profileDepartment: this.root.querySelector('[data-region="profile-department"]'),
@@ -181,6 +184,24 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             columnPickerMenu: this.root.querySelector('[data-region="column-picker-menu"]'),
             columnOptionsList: this.root.querySelector('[data-region="column-options-list"]')
         };
+    };
+
+    /**
+     * Decode HTML entities in text (e.g. &amp; -> &) safely.
+     *
+     * @param {string} text Text to decode.
+     * @returns {string} Decoded plain text.
+     */
+    CourseProgress.prototype.decodeHtml = function(text) {
+        if (!text || typeof text !== 'string') {
+            return text || '';
+        }
+        if (text.indexOf('&') === -1) {
+            return text;
+        }
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(text, 'text/html');
+        return doc.body.textContent || text;
     };
 
     /**
@@ -279,6 +300,12 @@ define(['block_itn_course_progress/repository'], function(Repository) {
 
         this.dom.studentTabs.forEach((tab) => {
             tab.addEventListener('click', () => this.switchStudentTab(tab.dataset.tab));
+        });
+
+        window.addEventListener('resize', () => {
+            if (self.activeView === 'studentprogress') {
+                self.updateTabIndicator(null, true);
+            }
         });
 
         // 9. Fullscreen / Expand Toggle ([+] Button).
@@ -468,7 +495,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         var link = document.createElement('a');
                         link.className = 'itn-course-name-link';
                         link.href = '#';
-                        link.textContent = course.coursename;
+                        link.textContent = self.decodeHtml(course.coursename);
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
                             self.drillDownIntoCourse(course);
@@ -509,7 +536,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         td.textContent = course.enddate;
                         break;
                     case 'category':
-                        td.textContent = course.category;
+                        td.textContent = self.decodeHtml(course.category);
                         break;
                     case 'groupscount':
                         td.textContent = course.groupscount;
@@ -539,7 +566,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             this.dom.studentSearchInput.value = '';
         }
 
-        this.dom.selectedCourseTitle.textContent = course.coursename;
+        this.dom.selectedCourseTitle.textContent = this.decodeHtml(course.coursename);
         this.activeView = 'students';
 
         this.dom.viewCourses.classList.add('d-none');
@@ -609,7 +636,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             groups.forEach(function(g) {
                 var opt = document.createElement('option');
                 opt.value = g.id;
-                opt.textContent = g.name;
+                opt.textContent = self.decodeHtml(g.name);
                 select.appendChild(opt);
             });
             select.value = self.selectedGroupId;
@@ -733,7 +760,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         var nameButton = document.createElement('button');
                         nameButton.type = 'button';
                         nameButton.className = 'btn btn-link p-0 fw-medium text-start itn-student-progress-link';
-                        nameButton.textContent = stu.name;
+                        nameButton.textContent = self.decodeHtml(stu.name);
                         nameButton.addEventListener('click', function() {
                             self.drillDownIntoStudent(stu);
                         });
@@ -764,7 +791,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         td.textContent = stu.firstaccess;
                         break;
                     case 'groupname':
-                        td.textContent = stu.groupname;
+                        td.textContent = self.decodeHtml(stu.groupname);
                         break;
                     case 'timecompleted':
                         td.textContent = stu.timecompleted;
@@ -798,6 +825,9 @@ define(['block_itn_course_progress/repository'], function(Repository) {
         this.dom.viewStudents.classList.add('d-none');
         this.dom.viewStudentProgress.classList.remove('d-none');
         this.switchStudentTab('courses');
+        window.requestAnimationFrame(() => {
+            this.updateTabIndicator(null, true);
+        });
         this.loadStudentProgress();
     };
 
@@ -835,20 +865,24 @@ define(['block_itn_course_progress/repository'], function(Repository) {
 
         this.dom.studentProgressAvatar.src = student.avatarurl;
         this.dom.studentProgressAvatar.alt = student.name;
-        this.dom.studentProgressName.textContent = student.name;
+        this.dom.studentProgressName.textContent = this.decodeHtml(student.name);
         this.dom.studentProgressLastAccess.textContent = student.lastaccess;
         this.dom.studentProgressMessage.href = student.messageurl;
-        this.dom.studentProfileTab.textContent = student.name;
+        this.dom.studentProfileLink.href = student.profileurl;
+        this.dom.studentProfileTab.textContent = this.decodeHtml(student.name);
+        window.requestAnimationFrame(() => {
+            this.updateTabIndicator(null, true);
+        });
         this.dom.studentStatContacts.textContent = student.contacts;
         this.dom.studentStatDiscussions.textContent = student.discussions;
         this.dom.studentStatBlogEntries.textContent = student.blogentries;
         this.dom.studentStatBadges.textContent = student.badges;
         this.dom.profileIdNumber.textContent = student.idnumber;
         this.dom.profileEmail.textContent = student.email;
-        this.dom.profileDepartment.textContent = student.department;
-        this.dom.profileInstitution.textContent = student.institution;
-        this.dom.profileCity.textContent = student.city;
-        this.dom.profileCountry.textContent = student.country;
+        this.dom.profileDepartment.textContent = this.decodeHtml(student.department);
+        this.dom.profileInstitution.textContent = this.decodeHtml(student.institution);
+        this.dom.profileCity.textContent = this.decodeHtml(student.city);
+        this.dom.profileCountry.textContent = this.decodeHtml(student.country);
         this.dom.profileFirstAccess.textContent = student.firstaccess;
         this.dom.profileLastLogin.textContent = student.lastlogin;
         this.dom.summaryTotalCourses.textContent = data.totalcourses;
@@ -889,14 +923,14 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             content.className = 'col-md-7 itn-course-card-content';
             const category = document.createElement('span');
             category.className = 'itn-course-category';
-            category.textContent = course.category;
+            category.textContent = this.decodeHtml(course.category);
 
             const title = document.createElement('a');
             title.className = 'itn-course-card-title';
             title.href = course.courseurl;
             title.target = '_blank';
             title.rel = 'noopener noreferrer';
-            title.textContent = course.fullname;
+            title.textContent = this.decodeHtml(course.fullname);
 
             const teacher = document.createElement('div');
             teacher.className = 'itn-course-teacher';
@@ -905,7 +939,7 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                 teacherImage.src = course.teacheravatarurl;
                 teacherImage.alt = '';
                 const teacherName = document.createElement('span');
-                teacherName.textContent = course.teachername;
+                teacherName.textContent = this.decodeHtml(course.teachername);
                 teacher.appendChild(teacherImage);
                 teacher.appendChild(teacherName);
                 if (course.additionalteachers > 0) {
@@ -959,17 +993,284 @@ define(['block_itn_course_progress/repository'], function(Repository) {
             courseLink.rel = 'noopener noreferrer';
             courseLink.textContent = labels.viewcourse || 'View course';
 
+            const activityPanel = document.createElement('div');
+            activityPanel.className = 'itn-activity-panel';
+            activityPanel.id = `${this.root.id}-activities-${course.id}`;
+            activityPanel.dataset.loaded = 'false';
+            activityPanel.hidden = true;
+
+            const activityButton = document.createElement('button');
+            activityButton.type = 'button';
+            activityButton.className = 'btn btn-outline-secondary itn-activity-details-btn';
+            activityButton.textContent = labels.activitydetails || 'Activity details';
+            activityButton.setAttribute('aria-expanded', 'false');
+            activityButton.setAttribute('aria-controls', activityPanel.id);
+            activityButton.addEventListener('click', () => {
+                this.toggleStudentActivities(course, activityPanel, activityButton);
+            });
+
+            const actions = document.createElement('div');
+            actions.className = 'itn-course-actions';
+            actions.appendChild(activityButton);
+            actions.appendChild(courseLink);
+
             content.appendChild(category);
             content.appendChild(title);
             content.appendChild(teacher);
             content.appendChild(completion);
             content.appendChild(courseMeta);
-            content.appendChild(courseLink);
+            content.appendChild(actions);
             layout.appendChild(imageColumn);
             layout.appendChild(content);
             card.appendChild(layout);
+            card.appendChild(activityPanel);
             this.dom.studentProgressCourses.appendChild(card);
         });
+    };
+
+    /**
+     * Toggle and lazily load a student's activity detail panel.
+     *
+     * @param {Object} course Course data.
+     * @param {HTMLElement} panel Activity panel.
+     * @param {HTMLButtonElement} button Toggle button.
+     */
+    CourseProgress.prototype.toggleStudentActivities = function(course, panel, button) {
+        const labels = this.labels;
+        if (panel.dataset.loaded === 'true') {
+            const opening = panel.hidden;
+            if (opening) {
+                this.expandActivityPanel(panel);
+            } else {
+                this.collapseActivityPanel(panel);
+            }
+            button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+            button.textContent = opening ?
+                (labels.hideactivities || 'Hide activities') :
+                (labels.activitydetails || 'Activity details');
+            return;
+        }
+
+        panel.textContent = labels.loadingactivities || 'Loading activities...';
+        this.expandActivityPanel(panel);
+        button.disabled = true;
+        button.setAttribute('aria-expanded', 'true');
+
+        Repository.getStudentActivities(
+            this.currentStudentProgress.id,
+            course.id,
+            this.selectedCourse.id
+        ).then((response) => {
+            this.renderStudentActivities(panel, response);
+            panel.dataset.loaded = 'true';
+            button.disabled = false;
+            button.textContent = labels.hideactivities || 'Hide activities';
+            return response;
+        }).catch((error) => {
+            this.collapseActivityPanel(panel);
+            button.disabled = false;
+            button.setAttribute('aria-expanded', 'false');
+            button.textContent = labels.activitydetails || 'Activity details';
+            this.showError(error);
+        });
+    };
+
+    /**
+     * Expand an activity panel using its measured content height.
+     *
+     * @param {HTMLElement} panel Activity panel.
+     */
+    CourseProgress.prototype.expandActivityPanel = function(panel) {
+        const sequence = Number(panel.dataset.animationSequence || '0') + 1;
+        panel.dataset.animation = 'expand';
+        panel.dataset.animationSequence = String(sequence);
+        panel.hidden = false;
+        panel.classList.add('is-animating');
+        panel.style.height = '0px';
+        panel.style.opacity = '0';
+
+        window.requestAnimationFrame(() => {
+            panel.style.height = `${panel.scrollHeight}px`;
+            panel.style.opacity = '1';
+        });
+
+        let handleTransition;
+        const finish = () => {
+            panel.removeEventListener('transitionend', handleTransition);
+            if (panel.dataset.animation === 'expand' &&
+                    Number(panel.dataset.animationSequence) === sequence) {
+                panel.style.height = 'auto';
+                panel.style.opacity = '';
+                panel.classList.remove('is-animating');
+                delete panel.dataset.animation;
+            }
+        };
+        handleTransition = (event) => {
+            if (event.target === panel && event.propertyName === 'height') {
+                finish();
+            }
+        };
+        panel.addEventListener('transitionend', handleTransition);
+        window.setTimeout(finish, 350);
+    };
+
+    /**
+     * Collapse an activity panel using its measured content height.
+     *
+     * @param {HTMLElement} panel Activity panel.
+     */
+    CourseProgress.prototype.collapseActivityPanel = function(panel) {
+        const sequence = Number(panel.dataset.animationSequence || '0') + 1;
+        panel.dataset.animation = 'collapse';
+        panel.dataset.animationSequence = String(sequence);
+        panel.style.height = `${panel.scrollHeight}px`;
+        panel.style.opacity = '1';
+        panel.classList.add('is-animating');
+
+        // Force the measured start height to render before transitioning to zero.
+        panel.getBoundingClientRect();
+
+        window.requestAnimationFrame(() => {
+            panel.style.height = '0px';
+            panel.style.opacity = '0';
+        });
+
+        let handleTransition;
+        const finish = () => {
+            panel.removeEventListener('transitionend', handleTransition);
+            if (panel.dataset.animation === 'collapse' &&
+                    Number(panel.dataset.animationSequence) === sequence) {
+                panel.hidden = true;
+                panel.style.height = '';
+                panel.style.opacity = '';
+                panel.classList.remove('is-animating');
+                delete panel.dataset.animation;
+            }
+        };
+        handleTransition = (event) => {
+            if (event.target === panel && event.propertyName === 'height') {
+                finish();
+            }
+        };
+        panel.addEventListener('transitionend', handleTransition);
+        window.setTimeout(finish, 350);
+    };
+
+    /**
+     * Render the tracked activity detail cards for one course.
+     *
+     * @param {HTMLElement} panel Activity panel.
+     * @param {Object} data Activity API response.
+     */
+    CourseProgress.prototype.renderStudentActivities = function(panel, data) {
+        const labels = this.labels;
+        panel.innerHTML = '';
+
+        const inner = document.createElement('div');
+        inner.className = 'itn-activity-panel-inner';
+        panel.appendChild(inner);
+
+        if (!data.activities || data.activities.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'itn-activity-empty';
+            empty.textContent = labels.noactivities || 'No completion-tracked activities are configured.';
+            inner.appendChild(empty);
+            return;
+        }
+
+        const header = document.createElement('div');
+        header.className = 'itn-activity-panel-header';
+        const heading = document.createElement('h5');
+        heading.textContent = labels.trackedactivities || 'Tracked activities';
+        const count = document.createElement('span');
+        count.className = 'itn-activity-count';
+        count.textContent = String(data.totalactivities);
+        header.appendChild(heading);
+        header.appendChild(count);
+        inner.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'itn-activity-list';
+        data.activities.forEach((activity) => {
+            const item = document.createElement('article');
+            item.className = 'itn-activity-item';
+
+            const activityWrap = document.createElement('div');
+            activityWrap.className = 'itn-activity-name';
+            const iconWrap = document.createElement('span');
+            iconWrap.classList.add('activity-icon', 'activityiconcontainer', 'smaller', 'itn-activity-icon');
+            iconWrap.classList.add(activity.purpose || 'other');
+            if (activity.isbranded) {
+                iconWrap.classList.add('isbranded');
+            }
+            const icon = document.createElement('img');
+            icon.src = activity.iconurl;
+            icon.alt = '';
+            icon.classList.add('activityicon', 'icon');
+            if (!activity.filtericon) {
+                icon.classList.add('nofilter');
+            }
+            iconWrap.appendChild(icon);
+            const name = activity.activityurl ? document.createElement('a') : document.createElement('span');
+            name.textContent = this.decodeHtml(activity.name);
+            if (activity.activityurl) {
+                name.href = activity.activityurl;
+                name.target = '_blank';
+                name.rel = 'noopener noreferrer';
+            }
+            const type = document.createElement('small');
+            type.textContent = this.decodeHtml(activity.typename);
+            const nameGroup = document.createElement('span');
+            nameGroup.appendChild(name);
+            nameGroup.appendChild(type);
+            activityWrap.appendChild(iconWrap);
+            activityWrap.appendChild(nameGroup);
+
+            const status = document.createElement('span');
+            status.className = `itn-activity-status itn-activity-status-${activity.statuskey}`;
+            status.textContent = activity.status;
+
+            const meta = document.createElement('dl');
+            meta.className = 'itn-activity-meta';
+            [
+                [labels.grade || 'Grade', activity.isgraded ? activity.grade : '-'],
+                [labels.completeddate || 'Completed', activity.completiondate],
+                [labels.lastinteraction || 'Last interaction', activity.lastinteraction],
+                [labels.interactions || 'Interactions', String(activity.interactions)]
+            ].forEach(([label, value]) => {
+                const group = document.createElement('div');
+                const term = document.createElement('dt');
+                const description = document.createElement('dd');
+                term.textContent = label;
+                description.textContent = value;
+                group.appendChild(term);
+                group.appendChild(description);
+                meta.appendChild(group);
+            });
+
+            const action = document.createElement('div');
+            action.className = 'itn-activity-action';
+            if (activity.activityurl) {
+                const link = document.createElement('a');
+                link.className = 'btn btn-sm btn-outline-primary';
+                link.href = activity.activityurl;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = labels.openactivity || 'Open activity';
+                action.appendChild(link);
+            }
+
+            item.appendChild(activityWrap);
+            item.appendChild(status);
+            item.appendChild(meta);
+            item.appendChild(action);
+            list.appendChild(item);
+        });
+
+        inner.appendChild(list);
+        if (panel.classList.contains('is-animating')) {
+            panel.style.height = `${panel.scrollHeight}px`;
+        }
     };
 
     /**
@@ -978,14 +1279,65 @@ define(['block_itn_course_progress/repository'], function(Repository) {
      * @param {String} tabName Tab identifier.
      */
     CourseProgress.prototype.switchStudentTab = function(tabName) {
+        let activeTabBtn = null;
         this.dom.studentTabs.forEach((tab) => {
             const active = tab.dataset.tab === tabName;
             tab.classList.toggle('active', active);
             tab.setAttribute('aria-selected', active ? 'true' : 'false');
+            if (active) {
+                activeTabBtn = tab;
+            }
         });
         this.dom.studentTabPanels.forEach((panel) => {
             panel.classList.toggle('d-none', panel.dataset.tabPanel !== tabName);
         });
+        if (activeTabBtn) {
+            this.updateTabIndicator(activeTabBtn);
+        }
+    };
+
+    /**
+     * Smoothly reposition the sliding active tab underline indicator.
+     *
+     * @param {HTMLElement|null} activeTabBtn The active tab button element.
+     * @param {Boolean} immediate Whether to skip transition for instant initial placement.
+     */
+    CourseProgress.prototype.updateTabIndicator = function(activeTabBtn, immediate) {
+        const indicator = this.dom.tabIndicator;
+        if (!indicator) {
+            return;
+        }
+
+        if (!activeTabBtn) {
+            activeTabBtn = this.root.querySelector('.itn-profile-tabs button.active');
+        }
+
+        if (!activeTabBtn || activeTabBtn.offsetParent === null) {
+            return;
+        }
+
+        const nav = this.dom.profileTabsNav || activeTabBtn.closest('.itn-profile-tabs');
+        if (!nav) {
+            return;
+        }
+
+        const navRect = nav.getBoundingClientRect();
+        const tabRect = activeTabBtn.getBoundingClientRect();
+        const left = tabRect.left - navRect.left + nav.scrollLeft;
+        const width = tabRect.width;
+
+        if (width > 0) {
+            if (immediate) {
+                indicator.style.transition = 'none';
+            }
+            indicator.style.left = `${left}px`;
+            indicator.style.width = `${width}px`;
+            indicator.classList.add('is-visible');
+            if (immediate) {
+                void indicator.offsetWidth;
+                indicator.style.transition = '';
+            }
+        }
     };
 
     /**
@@ -1083,8 +1435,12 @@ define(['block_itn_course_progress/repository'], function(Repository) {
                         '<tbody>';
 
             batches.forEach(function(b) {
+                var safeBatchName = self.decodeHtml(b.batchname)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
                 html += '<tr>' +
-                    '<td class="fw-bold text-dark text-start">' + b.batchname + '</td>' +
+                    '<td class="fw-bold text-dark text-start">' + safeBatchName + '</td>' +
                     '<td class="text-center fw-bold text-dark">' + b.members + '</td>' +
                     '<td class="text-center fw-bold" style="color: #00b894;">' + b.active + '</td>' +
                     '<td class="text-center fw-bold" style="color: #0066cc;">' + b.completed + '</td>' +
