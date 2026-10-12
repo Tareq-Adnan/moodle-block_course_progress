@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_itn_course_progress';
-$plugin->version   = 2026092407;
+$plugin->version   = 2026092410;
 $plugin->requires  = 2025041400; // Requires Moodle 5.0+.
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.3.3';

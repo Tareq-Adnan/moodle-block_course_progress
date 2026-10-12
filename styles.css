@@ -36,6 +36,23 @@
     font-family: inherit;
 }
 
+/* Allow dropdowns and column selector popovers to overflow cards without clipping */
+.block.block_itn_course_progress,
+.block.block_itn_course_progress.card,
+.style-minimal .block.block_itn_course_progress.card,
+.block_itn_course_progress.card,
+.block_itn_course_progress .card-body,
+.block_itn_course_progress .card-text,
+.block_itn_course_progress .content,
+.itn-course-progress-widget,
+.itn-course-progress-widget .itn-view-courses,
+.itn-course-progress-widget .itn-view-students,
+.itn-course-progress-widget .itn-toolbar,
+.itn-course-progress-widget .itn-toolbar-right,
+.itn-course-progress-widget .itn-column-picker-wrapper {
+    overflow: visible !important;
+}
+
 /* Toolbar Controls - Uniform 38px sizing & baseline alignment */
 .itn-course-progress-widget .itn-toolbar {
     align-items: center;
@@ -120,6 +137,63 @@
     background-color: #f1f5f9;
     border-color: #94a3b8;
     color: #1e293b;
+}
+
+/* Column Picker Popover & Scrollable Options */
+.itn-course-progress-widget .itn-column-picker-wrapper {
+    position: relative;
+    overflow: visible !important;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown {
+    min-width: 230px;
+    max-width: 280px;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+    z-index: 1060 !important;
+    padding: 0.85rem !important;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown [data-region=column-options-list] {
+    max-height: 220px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+}
+
+/* Custom smooth scrollbar for column options list */
+.itn-course-progress-widget .itn-column-picker-dropdown [data-region=column-options-list]::-webkit-scrollbar {
+    width: 5px;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown [data-region=column-options-list]::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown [data-region=column-options-list]::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown [data-region=column-options-list]::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown .form-check {
+    margin-bottom: 0.35rem;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown .form-check:last-child {
+    margin-bottom: 0;
+}
+
+.itn-course-progress-widget .itn-column-picker-dropdown .form-check-label {
+    cursor: pointer;
+    font-size: 0.8125rem;
+    color: #334155;
 }
 
 .itn-course-progress-widget .itn-perpage-select,
